@@ -26,5 +26,8 @@ jobs:
       - name: Prepare test environment
         run: cp .env.example .env && php artisan key:generate
 
+      - name: Verify application routes
+        run: php artisan route:list --path=admin
+
       - name: Run tests
         run: php artisan test
