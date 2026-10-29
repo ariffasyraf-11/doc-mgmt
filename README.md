@@ -1,29 +1,48 @@
 # Document Management System (doc-mgmt)
 
-A Laravel-based internal document management system for one organization, with private document storage, version history, configurable review and approval, publishing, expiry tracking, archive management, audit history, and in-app reminders.
+Internal document management for one organization, built with Laravel 13 and Filament 5.
 
-## Status
+## Current implementation
 
-Implementation is starting. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased delivery plan and [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) for the agreed scope.
+- Document metadata management in Filament.
+- Department, category, and document-type foundation.
+- Private file uploads with SHA-256 checksums and version history.
+- Authorized download route for the current published version, with download audit records.
+- Sequential/parallel review-cycle service, reviewer decisions, publication, and archive actions.
+- Expiry dates and scheduled in-app database reminders.
+- Role and visibility policy foundations.
+- Initial automated access-policy tests.
 
-## Planned stack
+This is an active first implementation, not yet production-ready. See docs/ROADMAP.md for remaining work.
 
-- Laravel 13
-- A compatible stable Filament release, verified during setup
+## Requirements
+
+- PHP 8.3+
+- Composer 2
 - MySQL
-- Laravel policies and role/permission authorization
-- Private file storage
-- Laravel database notifications and scheduled reminder processing
+- Filament 5 compatible with Laravel 13
 
-## Security principles
+## Local setup
 
-- Documents are stored outside the public web root.
-- Every view/download is authorized server-side.
-- Only approved versions can be published.
-- Replacing a published version does not remove the current version until its replacement is approved and published.
-- Expired documents remain published but are clearly marked until an authorized action is taken.
-- Historical versions, review decisions, and audit records are retained.
+1. Clone this repository.
+2. Run composer install.
+3. Copy .env.example to .env.
+4. Create the MySQL database configured by DB_DATABASE and update DB_USERNAME / DB_PASSWORD.
+5. For the first local setup only, set DMS_ADMIN_EMAIL and DMS_ADMIN_PASSWORD in your local .env file. Do not commit credentials.
+6. Run php artisan key:generate.
+7. Run php artisan migrate --seed.
+8. Run php artisan serve and open /admin.
 
-## Setup
+The seeder creates the default Operations department, General category, Internal Document type, and a sequential review policy. It creates the initial administrator only when DMS_ADMIN_EMAIL and DMS_ADMIN_PASSWORD are provided.
 
-Setup instructions will be completed alongside the application foundation. Do not use production credentials in `.env.example`.
+## File security
+
+Document files are stored on the private disk under storage/app/private/documents, outside the public web root. Do not create a public storage link for this directory. Downloads must go through the authenticated, policy-checked route.
+
+## Reminder scheduler
+
+The command is dms:process-reminders. Run the Laravel scheduler every minute in production; the reminder task itself runs daily at 08:00 in the configured application timezone.
+
+## Important
+
+The review UI and first workflow endpoints are implemented, but full CRUD for users/departments/document types, configurable reminder settings, retry monitoring, complete tests, backup/recovery instructions, and production hardening remain in the roadmap.
