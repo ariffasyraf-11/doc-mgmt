@@ -40,6 +40,6 @@ class Document extends Model
 
     public function isExpired(): bool
     {
-        return $this->expiry_date !== null && $this->expiry_date->lt(today());
+        return $this->expiry_date !== null && $this->expiry_date->lte(today());
     }
 }
