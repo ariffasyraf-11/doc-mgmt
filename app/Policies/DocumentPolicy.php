@@ -68,6 +68,9 @@ class DocumentPolicy
     {
         return $user->is_active
             && ($document->owner_id === $user->id || in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true))
+            && ($document->visibility !== DocumentVisibility::Confidential
+                || $document->owner_id === $user->id
+                || $document->accessGrants()->where('user_id', $user->id)->exists())
             && in_array($document->workflow_status, [
                 DocumentWorkflowStatus::Draft,
                 DocumentWorkflowStatus::Rejected,
@@ -88,6 +91,9 @@ class DocumentPolicy
     {
         return $user->is_active
             && in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true)
+            && ($document->visibility !== DocumentVisibility::Confidential
+                || $document->owner_id === $user->id
+                || $document->accessGrants()->where('user_id', $user->id)->exists())
             && $document->workflow_status === DocumentWorkflowStatus::Published;
     }
 
