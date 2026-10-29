@@ -31,12 +31,13 @@ class DatabaseSeeder extends Seeder
         );
 
         DocumentTypeReviewPolicy::query()->firstOrCreate(
-            ['document_type_id' => $type->id, 'is_active' => true],
+            ['document_type_id' => $type->id],
             [
                 'review_mode' => ReviewMode::Sequential,
                 'required_reviewers' => 1,
                 'owner_can_review' => false,
                 'rejection_mode' => 'reject_cycle',
+                'is_active' => true,
             ],
         );
 

@@ -62,14 +62,13 @@ return new class extends Migration
 
         Schema::create('document_type_review_policies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_type_id')->constrained()->restrictOnDelete();
+            $table->foreignId('document_type_id')->unique()->constrained()->restrictOnDelete();
             $table->string('review_mode', 20)->default('sequential');
             $table->unsignedSmallInteger('required_reviewers')->default(1);
             $table->boolean('owner_can_review')->default(false);
             $table->string('rejection_mode', 30)->default('reject_cycle');
             $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
-            $table->index(['document_type_id', 'is_active']);
         });
 
         Schema::create('documents', function (Blueprint $table) {
