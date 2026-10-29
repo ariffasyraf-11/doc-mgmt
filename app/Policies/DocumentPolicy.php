@@ -11,10 +11,7 @@ use App\Models\User;
 
 class DocumentPolicy
 {
-    public function viewAny(User $user): bool
-    {
-        return $user->is_active;
-    }
+    public function viewAny(User $user): bool { return $user->is_active; }
 
     public function view(User $user, Document $document): bool
     {
@@ -36,15 +33,11 @@ class DocumentPolicy
         };
     }
 
-    public function create(User $user): bool
-    {
-        return $user->is_active;
-    }
+    public function create(User $user): bool { return $user->is_active; }
 
     public function update(User $user, Document $document): bool
     {
         if (! $user->is_active) return false;
-
         if (in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true)) {
             return $document->visibility !== DocumentVisibility::Confidential
                 || $document->owner_id === $user->id
@@ -55,10 +48,31 @@ class DocumentPolicy
             && in_array($document->workflow_status, [DocumentWorkflowStatus::Draft, DocumentWorkflowStatus::Rejected], true);
     }
 
+    public function uploadVersion(User $user, Document $document): bool
+    {
+        if (! $user->is_active) return false;
+        if ($document->owner_id === $user->id) {
+            return in_array($document->workflow_status, [
+                DocumentWorkflowStatus::Draft,
+                DocumentWorkflowStatus::Rejected,
+                DocumentWorkflowStatus::Published,
+            ], true);
+        }
+
+        return in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true)
+            && ($document->visibility !== DocumentVisibility::Confidential
+                || $document->accessGrants()->where('user_id', $user->id)->exists());
+    }
+
     public function submit(User $user, Document $document): bool
     {
-        return $this->update($user, $document)
-            && in_array($document->workflow_status, [DocumentWorkflowStatus::Draft, DocumentWorkflowStatus::Rejected], true);
+        return $user->is_active
+            && ($document->owner_id === $user->id || in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true))
+            && in_array($document->workflow_status, [
+                DocumentWorkflowStatus::Draft,
+                DocumentWorkflowStatus::Rejected,
+                DocumentWorkflowStatus::Published,
+            ], true);
     }
 
     public function publish(User $user, Document $document): bool

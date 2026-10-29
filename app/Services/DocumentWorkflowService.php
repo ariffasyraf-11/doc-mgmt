@@ -25,36 +25,24 @@ class DocumentWorkflowService
     /** @param array<int> $reviewerIds */
     public function submit(Document $document, DocumentVersion $version, User $actor, array $reviewerIds): DocumentReviewCycle
     {
-        if (! $actor->can('submit', $document)) {
-            throw new AuthorizationException('You are not allowed to submit this document.');
-        }
-        if ($version->document_id !== $document->id) {
-            throw ValidationException::withMessages(['version' => 'The version does not belong to this document.']);
-        }
+        if (! $actor->can('submit', $document)) throw new AuthorizationException('You are not allowed to submit this document.');
+        if ($version->document_id !== $document->id) throw ValidationException::withMessages(['version' => 'The version does not belong to this document.']);
         if (! in_array($version->status, [DocumentVersionStatus::Draft, DocumentVersionStatus::Rejected], true)) {
             throw ValidationException::withMessages(['version' => 'Only a draft or rejected version can be submitted.']);
         }
-        if (! Storage::disk('private')->exists($version->file_path)) {
-            throw ValidationException::withMessages(['file' => 'The file is missing from private storage.']);
-        }
+        if (! Storage::disk('private')->exists($version->file_path)) throw ValidationException::withMessages(['file' => 'The file is missing from private storage.']);
 
         $policy = $document->documentType?->activeReviewPolicy;
-        if (! $policy instanceof DocumentTypeReviewPolicy) {
-            throw ValidationException::withMessages(['document_type_id' => 'An active review policy is required.']);
-        }
+        if (! $policy instanceof DocumentTypeReviewPolicy) throw ValidationException::withMessages(['document_type_id' => 'An active review policy is required.']);
 
         $reviewerIds = array_values(array_unique(array_map('intval', $reviewerIds)));
-        if (count($reviewerIds) < $policy->required_reviewers) {
-            throw ValidationException::withMessages(['reviewers' => 'Not enough reviewers are assigned for this policy.']);
-        }
+        if (count($reviewerIds) < $policy->required_reviewers) throw ValidationException::withMessages(['reviewers' => 'Not enough reviewers are assigned for this policy.']);
         if (! $policy->owner_can_review && in_array($document->owner_id, $reviewerIds, true)) {
             throw ValidationException::withMessages(['reviewers' => 'The owner cannot review their own submission.']);
         }
 
         $reviewers = User::query()->whereIn('id', $reviewerIds)->where('is_active', true)->get();
-        if ($reviewers->count() !== count($reviewerIds)) {
-            throw ValidationException::withMessages(['reviewers' => 'All reviewers must be active users.']);
-        }
+        if ($reviewers->count() !== count($reviewerIds)) throw ValidationException::withMessages(['reviewers' => 'All reviewers must be active users.']);
 
         return DB::transaction(function () use ($document, $version, $actor, $reviewerIds, $reviewers, $policy) {
             $cycle = DocumentReviewCycle::query()->create([
@@ -82,7 +70,10 @@ class DocumentWorkflowService
             }
 
             $version->update(['status' => DocumentVersionStatus::UnderReview, 'submitted_at' => now()]);
-            $document->update(['workflow_status' => DocumentWorkflowStatus::UnderReview]);
+            if ($document->current_published_version_id === null) {
+                $document->update(['workflow_status' => DocumentWorkflowStatus::UnderReview]);
+            }
+
             $this->audit->record($actor->id, 'document.submitted_for_review', $document, [
                 'version_id' => $version->id, 'review_cycle_id' => $cycle->id, 'reviewer_ids' => $reviewerIds,
             ]);
@@ -96,9 +87,7 @@ class DocumentWorkflowService
         if (! in_array($decision, [ReviewStatus::Approved, ReviewStatus::Rejected], true)) {
             throw ValidationException::withMessages(['decision' => 'A review decision must be approved or rejected.']);
         }
-        if ($review->reviewer_id !== $actor->id || ! $actor->is_active) {
-            throw new AuthorizationException('Only the assigned active reviewer can decide this review.');
-        }
+        if ($review->reviewer_id !== $actor->id || ! $actor->is_active) throw new AuthorizationException('Only the assigned active reviewer can decide this review.');
 
         return DB::transaction(function () use ($review, $actor, $decision, $comments) {
             $review = DocumentVersionReview::query()->lockForUpdate()->findOrFail($review->id);
@@ -110,28 +99,25 @@ class DocumentWorkflowService
                 throw ValidationException::withMessages(['review' => 'This review cycle is no longer accepting decisions.']);
             }
             if (ReviewMode::from($cycle->policy_snapshot['review_mode']) === ReviewMode::Sequential) {
-                $earlierPending = $cycle->reviews()
-                    ->where('sequence_number', '<', $review->sequence_number)
-                    ->where('status', '!=', ReviewStatus::Approved->value)
-                    ->exists();
-                if ($earlierPending) {
-                    throw ValidationException::withMessages(['review' => 'Earlier reviewers must approve first.']);
-                }
+                $earlierPending = $cycle->reviews()->where('sequence_number', '<', $review->sequence_number)
+                    ->where('status', '!=', ReviewStatus::Approved->value)->exists();
+                if ($earlierPending) throw ValidationException::withMessages(['review' => 'Earlier reviewers must approve first.']);
             }
 
-            $review->update([
-                'status' => $decision, 'decision' => $decision->value,
-                'comments' => $comments, 'decided_at' => now(),
-            ]);
+            $review->update(['status' => $decision, 'decision' => $decision->value, 'comments' => $comments, 'decided_at' => now()]);
 
             if ($decision === ReviewStatus::Rejected) {
                 $cycle->update(['status' => ReviewCycleStatus::Rejected, 'completed_at' => now()]);
                 $version->update(['status' => DocumentVersionStatus::Rejected]);
-                $document->update(['workflow_status' => DocumentWorkflowStatus::Rejected]);
+                if ($document->current_published_version_id === null) {
+                    $document->update(['workflow_status' => DocumentWorkflowStatus::Rejected]);
+                }
             } elseif (! $cycle->reviews()->where('status', ReviewStatus::Pending->value)->exists()) {
                 $cycle->update(['status' => ReviewCycleStatus::Approved, 'completed_at' => now()]);
                 $version->update(['status' => DocumentVersionStatus::Approved, 'approved_at' => now()]);
-                $document->update(['workflow_status' => DocumentWorkflowStatus::Approved]);
+                if ($document->current_published_version_id === null) {
+                    $document->update(['workflow_status' => DocumentWorkflowStatus::Approved]);
+                }
             }
 
             $this->audit->record($actor->id, 'document.review_decided', $document, [
@@ -144,9 +130,7 @@ class DocumentWorkflowService
 
     public function publish(Document $document, DocumentVersion $version, User $actor): void
     {
-        if (! $actor->can('publish', $document)) {
-            throw new AuthorizationException('You are not allowed to publish this document.');
-        }
+        if (! $actor->can('publish', $document)) throw new AuthorizationException('You are not allowed to publish this document.');
         if ($version->document_id !== $document->id || $version->status !== DocumentVersionStatus::Approved) {
             throw ValidationException::withMessages(['version' => 'Only an approved version can be published.']);
         }
@@ -164,10 +148,7 @@ class DocumentWorkflowService
                     ->update(['status' => DocumentVersionStatus::Superseded->value]);
             }
             $version->update(['status' => DocumentVersionStatus::Published, 'published_at' => now()]);
-            $document->update([
-                'current_published_version_id' => $version->id,
-                'workflow_status' => DocumentWorkflowStatus::Published,
-            ]);
+            $document->update(['current_published_version_id' => $version->id, 'workflow_status' => DocumentWorkflowStatus::Published]);
             $this->audit->record($actor->id, 'document.version_published', $document, [
                 'version_id' => $version->id, 'previous_version_id' => $previousVersionId,
             ]);
