@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\DocumentVersionStatus;
 use App\Enums\DocumentWorkflowStatus;
+use App\Enums\ReviewCycleStatus;
 use App\Models\Document;
 use App\Models\DocumentVersion;
 use App\Models\User;
@@ -20,13 +21,10 @@ class DocumentVersionService
 
     public function upload(Document $document, UploadedFile $file, User $actor, ?string $changeNotes = null): DocumentVersion
     {
-        $allowedStatuses = [
-            DocumentWorkflowStatus::Draft,
-            DocumentWorkflowStatus::Rejected,
-            DocumentWorkflowStatus::Published,
-        ];
+        $allowedStatuses = [DocumentWorkflowStatus::Draft, DocumentWorkflowStatus::Rejected, DocumentWorkflowStatus::Published];
 
-        if (! in_array($document->workflow_status, $allowedStatuses, true)) {
+        if (! in_array($document->workflow_status, $allowedStatuses, true)
+            || $document->reviewCycles()->whereIn('status', [ReviewCycleStatus::Pending->value, ReviewCycleStatus::InProgress->value])->exists()) {
             throw ValidationException::withMessages(['document' => 'A new version cannot be uploaded while this document is in an active review or approval state.']);
         }
 
@@ -39,7 +37,8 @@ class DocumentVersionService
             return DB::transaction(function () use ($document, $file, $actor, $changeNotes, $path, $allowedStatuses) {
                 $lockedDocument = Document::query()->lockForUpdate()->findOrFail($document->id);
 
-                if (! in_array($lockedDocument->workflow_status, $allowedStatuses, true)) {
+                if (! in_array($lockedDocument->workflow_status, $allowedStatuses, true)
+                    || $lockedDocument->reviewCycles()->whereIn('status', [ReviewCycleStatus::Pending->value, ReviewCycleStatus::InProgress->value])->exists()) {
                     throw ValidationException::withMessages(['document' => 'The document entered an active workflow while the file was uploading. Please try again later.']);
                 }
 
@@ -48,9 +47,7 @@ class DocumentVersionService
                 }
 
                 $nextVersionNumber = ((int) $lockedDocument->versions()->max('version_number')) + 1;
-                $previousVersionId = $lockedDocument->current_published_version_id;
                 $checksum = hash_file('sha256', Storage::disk('private')->path($path));
-
                 if (! is_string($checksum)) {
                     throw ValidationException::withMessages(['file' => 'Unable to calculate the uploaded file checksum.']);
                 }
@@ -65,7 +62,7 @@ class DocumentVersionService
                     'change_notes' => $changeNotes,
                     'uploaded_by' => $actor->id,
                     'status' => DocumentVersionStatus::Draft,
-                    'supersedes_version_id' => $previousVersionId,
+                    'supersedes_version_id' => $lockedDocument->current_published_version_id,
                 ]);
 
                 $this->audit->record($actor->id, 'document.version_uploaded', $lockedDocument, [

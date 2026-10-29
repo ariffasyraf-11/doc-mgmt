@@ -14,11 +14,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentVersionController
 {
-    public function create(Request $request, Document $document)
+    public function create(Request $request, Document $document): RedirectResponse
     {
         $this->authorizeUpload($request, $document);
 
-        return view('documents.versions.create', compact('document'));
+        return redirect()->route('documents.workflow.show', $document);
     }
 
     public function store(Request $request, Document $document, DocumentVersionService $versions): RedirectResponse
@@ -32,7 +32,7 @@ class DocumentVersionController
 
         $version = $versions->upload($document, $validated['file'], $request->user(), $validated['change_notes'] ?? null);
 
-        return redirect()->route('documents.versions.create', $document)
+        return redirect()->route('documents.workflow.show', $document)
             ->with('status', 'Uploaded version '.$version->version_number.'. It remains a draft until submitted for review.');
     }
 

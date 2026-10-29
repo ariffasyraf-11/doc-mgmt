@@ -113,10 +113,6 @@ return new class extends Migration
             $table->index(['document_id', 'status']);
         });
 
-        Schema::table('documents', function (Blueprint $table) {
-            $table->foreign('current_published_version_id')->references('id')->on('document_versions')->nullOnDelete();
-        });
-
         Schema::create('document_review_cycles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained()->restrictOnDelete();
@@ -218,9 +214,6 @@ return new class extends Migration
         Schema::dropIfExists('document_access');
         Schema::dropIfExists('document_version_reviews');
         Schema::dropIfExists('document_review_cycles');
-        Schema::table('documents', function (Blueprint $table) {
-            $table->dropForeign(['current_published_version_id']);
-        });
         Schema::dropIfExists('document_versions');
         Schema::dropIfExists('documents');
         Schema::dropIfExists('document_type_review_policies');

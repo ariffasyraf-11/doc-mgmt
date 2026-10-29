@@ -64,10 +64,10 @@ class DocumentResource extends Resource
                 SelectFilter::make('workflow_status')->options(collect(DocumentWorkflowStatus::cases())->mapWithKeys(fn ($status) => [$status->value => str($status->value)->replace('_', ' ')->title()->toString()])->all()),
             ])
             ->recordActions([
-                Action::make('uploadVersion')
-                    ->label('Upload version')
-                    ->url(fn (Document $record): string => route('documents.versions.create', $record))
-                    ->visible(fn (Document $record): bool => Auth::user()?->can('uploadVersion', $record) ?? false),
+                Action::make('manageVersions')
+                    ->label('Versions / workflow')
+                    ->url(fn (Document $record): string => route('documents.workflow.show', $record))
+                    ->visible(fn (Document $record): bool => Auth::user()?->can('view', $record) ?? false),
                 EditAction::make(),
             ]);
     }
