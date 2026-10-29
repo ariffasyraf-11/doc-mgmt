@@ -63,9 +63,22 @@ class DocumentDownloadPolicyTest extends TestCase
         $policy = app(DocumentVersionPolicy::class);
         $this->assertTrue($reader->can('view', $document));
         $this->assertFalse($policy->download($reader, $version));
+        $this->assertTrue($policy->download($owner, $version));
+
+        $draft = DocumentVersion::query()->create([
+            'document_id' => $document->id,
+            'version_number' => 2,
+            'file_path' => 'draft.pdf',
+            'original_filename' => 'draft.pdf',
+            'mime_type' => 'application/pdf',
+            'file_size' => 5,
+            'checksum' => hash('sha256', 'draft'),
+            'uploaded_by' => $owner->id,
+            'status' => DocumentVersionStatus::Draft,
+        ]);
+        $this->assertTrue($policy->download($owner, $draft));
 
         $grant->update(['access_level' => 'download']);
-
         $this->assertTrue($policy->download($reader, $version));
     }
 
