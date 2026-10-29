@@ -56,7 +56,7 @@ class DocumentResource extends Resource
                 TextColumn::make('department.name')->label('Department')->sortable(),
                 TextColumn::make('documentType.name')->label('Type')->sortable(),
                 TextColumn::make('workflow_status')->badge(),
-                TextColumn::make('expiry_date')->date()->sortable(),
+                TextColumn::make('expiry_date')->date()->sortable()->color(fn (Document $record) => $record->isExpired() ? 'danger' : null),
                 TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -86,23 +86,18 @@ class DocumentResource extends Resource
                     $department->where('visibility', DocumentVisibility::Department->value)->where('department_id', $user->department_id);
                 })
                 ->orWhereHas('accessGrants', fn (Builder $grants) => $grants->where('user_id', $user->id))
-                ->orWhereHas('versions.reviews', fn (Builder $reviews) => $reviews->where('reviewer_id', $user->id));
+                ->orWhereHas('versions.reviews', fn (Builder $reviews) => $reviews
+                    ->where('reviewer_id', $user->id)
+                    ->whereHas('cycle', fn (Builder $cycles) => $cycles->where('status', 'in_progress')));
 
             if ($user->isAdministrator() || $user->isDocumentManager()) {
-                $visible->orWhere('visibility', '!=', DocumentVisibility::Confidential->value);
+                $visible->orWhereIn('visibility', [DocumentVisibility::Organization->value, DocumentVisibility::Department->value]);
             }
         });
     }
 
-    public static function canViewAny(): bool
-    {
-        return Auth::check() && Auth::user()->can('viewAny', Document::class);
-    }
-
-    public static function canCreate(): bool
-    {
-        return Auth::check() && Auth::user()->can('create', Document::class);
-    }
+    public static function canViewAny(): bool { return Auth::check() && Auth::user()->can('viewAny', Document::class); }
+    public static function canCreate(): bool { return Auth::check() && Auth::user()->can('create', Document::class); }
 
     public static function getPages(): array
     {

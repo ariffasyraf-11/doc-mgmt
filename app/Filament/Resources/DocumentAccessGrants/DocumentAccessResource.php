@@ -61,7 +61,7 @@ class DocumentAccessResource extends Resource
             TextColumn::make('created_at')->dateTime()->sortable(),
         ])->recordActions([
             EditAction::make(),
-            DeleteAction::make()->before(function (DocumentAccess $record): void {
+            DeleteAction::make()->after(function (DocumentAccess $record): void {
                 app(DocumentAuditService::class)->record(Auth::id(), 'document.access_revoked', $record->document, [
                     'user_id' => $record->user_id,
                     'access_level' => $record->access_level,
@@ -74,37 +74,23 @@ class DocumentAccessResource extends Resource
     {
         $user = Auth::user();
         $query = parent::getEloquentQuery();
-
         if (! $user instanceof User) return $query->whereRaw('1 = 0');
 
-        return $query->whereHas('document', function (Builder $documents) use ($user) {
-            $documents->where('owner_id', $user->id);
-
-            if ($user->isAdministrator() || $user->isDocumentManager()) {
-                $documents->orWhere('visibility', '!=', 'confidential');
-            }
-
-            $documents->orWhereHas('accessGrants', fn (Builder $grants) => $grants
-                ->where('user_id', $user->id)
-                ->where('access_level', 'manage'));
-        });
+        return $query->whereHas('document', fn (Builder $documents) => self::manageableDocuments($documents, $user));
     }
 
-    private static function manageableDocuments(Builder $query): Builder
+    private static function manageableDocuments(Builder $query, ?User $user = null): Builder
     {
-        $user = Auth::user();
+        $user ??= Auth::user();
         if (! $user instanceof User) return $query->whereRaw('1 = 0');
 
         return $query->where(function (Builder $documents) use ($user) {
             $documents->where('owner_id', $user->id);
-
             if ($user->isAdministrator() || $user->isDocumentManager()) {
-                $documents->orWhere('visibility', '!=', 'confidential');
+                $documents->orWhereIn('visibility', ['organization', 'department']);
             }
-
             $documents->orWhereHas('accessGrants', fn (Builder $grants) => $grants
-                ->where('user_id', $user->id)
-                ->where('access_level', 'manage'));
+                ->where('user_id', $user->id)->where('access_level', 'manage'));
         });
     }
 
