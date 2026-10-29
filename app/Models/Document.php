@@ -32,7 +32,7 @@ class Document extends Model
     public function department() { return $this->belongsTo(Department::class); }
     public function category() { return $this->belongsTo(Category::class); }
     public function documentType() { return $this->belongsTo(DocumentType::class); }
-    public function versions() { return $this->hasMany(DocumentVersion::class)->orderByDesc('version_number'); }
+    public function versions() { return $this->hasMany(DocumentVersion::class); }
     public function currentPublishedVersion() { return $this->belongsTo(DocumentVersion::class, 'current_published_version_id'); }
     public function accessGrants() { return $this->hasMany(DocumentAccess::class); }
     public function reviewCycles() { return $this->hasMany(DocumentReviewCycle::class); }

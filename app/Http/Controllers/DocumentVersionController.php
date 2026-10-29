@@ -10,11 +10,17 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentVersionController
 {
+    public function create(Request $request, Document $document)
+    {
+        $this->authorizeUpload($request, $document);
+
+        return view('documents.versions.create', compact('document'));
+    }
+
     public function store(Request $request, Document $document, DocumentVersionService $versions): RedirectResponse
     {
         $this->authorizeUpload($request, $document);
@@ -26,7 +32,8 @@ class DocumentVersionController
 
         $version = $versions->upload($document, $validated['file'], $request->user(), $validated['change_notes'] ?? null);
 
-        return back()->with('status', 'Uploaded document version '.$version->version_number.'. It is still a draft until submitted for review.');
+        return redirect()->route('documents.versions.create', $document)
+            ->with('status', 'Uploaded version '.$version->version_number.'. It remains a draft until submitted for review.');
     }
 
     public function download(Request $request, Document $document, DocumentVersion $version): StreamedResponse
@@ -34,7 +41,9 @@ class DocumentVersionController
         abort_unless($version->document_id === $document->id, 404);
 
         try {
-            $request->user()->can('download', $version) || throw new AuthorizationException();
+            if (! $request->user()->can('download', $version)) {
+                throw new AuthorizationException();
+            }
         } catch (AuthorizationException $exception) {
             DocumentDownload::query()->create([
                 'document_version_id' => $version->id,
