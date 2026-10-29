@@ -9,6 +9,7 @@ use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
 use App\Models\Document;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -62,7 +63,13 @@ class DocumentResource extends Resource
                 SelectFilter::make('visibility')->options(DocumentVisibility::options()),
                 SelectFilter::make('workflow_status')->options(collect(DocumentWorkflowStatus::cases())->mapWithKeys(fn ($status) => [$status->value => str($status->value)->replace('_', ' ')->title()->toString()])->all()),
             ])
-            ->recordActions([EditAction::make()]);
+            ->recordActions([
+                Action::make('uploadVersion')
+                    ->label('Upload version')
+                    ->url(fn (Document $record): string => route('documents.versions.create', $record))
+                    ->visible(fn (Document $record): bool => Auth::user()?->can('uploadVersion', $record) ?? false),
+                EditAction::make(),
+            ]);
     }
 
     public static function getEloquentQuery(): Builder
