@@ -33,15 +33,10 @@ class DocumentAccessResource extends Resource
         return $schema->components([
             Select::make('document_id')
                 ->relationship('document', 'title', modifyQueryUsing: fn (Builder $query): Builder => self::manageableDocuments($query))
-                ->searchable()
-                ->preload()
-                ->required(),
+                ->searchable()->preload()->required(),
             Select::make('user_id')
                 ->relationship('user', 'name', modifyQueryUsing: fn (Builder $query): Builder => $query->where('is_active', true))
-                ->searchable()
-                ->preload()
-                ->required()
-                ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule, $state, $record) => $rule->where('document_id', $record?->document_id ?? request()->input('data.document_id'))),
+                ->searchable()->preload()->required(),
             Select::make('access_level')->options([
                 'view' => 'View metadata',
                 'download' => 'View and download',
@@ -113,25 +108,10 @@ class DocumentAccessResource extends Resource
         });
     }
 
-    public static function canViewAny(): bool
-    {
-        return Auth::check() && Auth::user()->is_active;
-    }
-
-    public static function canCreate(): bool
-    {
-        return Auth::check() && Auth::user()->is_active;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return Auth::user()?->can('manageAccess', $record->document) ?? false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return Auth::user()?->can('manageAccess', $record->document) ?? false;
-    }
+    public static function canViewAny(): bool { return Auth::check() && Auth::user()->is_active; }
+    public static function canCreate(): bool { return Auth::check() && Auth::user()->is_active; }
+    public static function canEdit(Model $record): bool { return Auth::user()?->can('manageAccess', $record->document) ?? false; }
+    public static function canDelete(Model $record): bool { return Auth::user()?->can('manageAccess', $record->document) ?? false; }
 
     public static function getPages(): array
     {
