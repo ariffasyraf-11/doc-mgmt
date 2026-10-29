@@ -40,9 +40,9 @@
                 <p>{{ $version->original_filename }} · Uploaded {{ $version->created_at->format('Y-m-d H:i') }}</p>
                 @if ($version->change_notes) <p>{{ $version->change_notes }}</p> @endif
 
-                @if ($document->current_published_version_id === $version->id && $document->workflow_status->value !== 'archived')
-                    <p><a href="{{ route('documents.versions.download', [$document, $version]) }}">Download current published version</a></p>
-                @endif
+                @can('download', $version)
+                    <p><a href="{{ route('documents.versions.download', [$document, $version]) }}">Download file</a></p>
+                @endcan
 
                 @if ($canSubmit && in_array($version->status->value, ['draft', 'rejected'], true))
                     <form method="post" action="{{ route('documents.versions.submit', [$document, $version]) }}">
@@ -95,7 +95,7 @@
     @if ($canArchive && $document->workflow_status->value === 'published')
         <section>
             <h2>Archive</h2>
-            <form method="post" action="{{ route('documents.archive', $document) }}">
+            <form method="post" action="{{ route('documents.archive', $document) }}" onsubmit="return confirm('Archive this document? The history will be retained.');">
                 @csrf
                 <button type="submit">Archive document</button>
             </form>

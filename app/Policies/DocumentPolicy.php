@@ -53,9 +53,7 @@ class DocumentPolicy
         if (! $user->is_active) return false;
         if ($document->owner_id === $user->id) {
             return in_array($document->workflow_status, [
-                DocumentWorkflowStatus::Draft,
-                DocumentWorkflowStatus::Rejected,
-                DocumentWorkflowStatus::Published,
+                DocumentWorkflowStatus::Draft, DocumentWorkflowStatus::Rejected, DocumentWorkflowStatus::Published,
             ], true);
         }
 
@@ -72,9 +70,7 @@ class DocumentPolicy
                 || $document->owner_id === $user->id
                 || $document->accessGrants()->where('user_id', $user->id)->exists())
             && in_array($document->workflow_status, [
-                DocumentWorkflowStatus::Draft,
-                DocumentWorkflowStatus::Rejected,
-                DocumentWorkflowStatus::Published,
+                DocumentWorkflowStatus::Draft, DocumentWorkflowStatus::Rejected, DocumentWorkflowStatus::Published,
             ], true);
     }
 
@@ -97,10 +93,24 @@ class DocumentPolicy
             && $document->workflow_status === DocumentWorkflowStatus::Published;
     }
 
+    public function manageAccess(User $user, Document $document): bool
+    {
+        if (! $user->is_active) return false;
+        if ($document->owner_id === $user->id) return true;
+
+        if (in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true)
+            && $document->visibility !== DocumentVisibility::Confidential) {
+            return true;
+        }
+
+        return $document->accessGrants()
+            ->where('user_id', $user->id)
+            ->where('access_level', 'manage')
+            ->exists();
+    }
+
     public function download(User $user, DocumentVersion $version): bool
     {
-        return $this->view($user, $version->document)
-            && $version->document->workflow_status !== DocumentWorkflowStatus::Archived
-            && $version->document->current_published_version_id === $version->id;
+        return $user->can('download', $version);
     }
 }
