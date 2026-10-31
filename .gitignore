@@ -1,8 +1,10 @@
 /vendor
 /node_modules
+public
 /public/build
 /public/hot
 /public/storage
+storage
 /storage/*.key
 /storage/pail
 /storage/framework/cache/*
@@ -20,3 +22,4 @@
 auth.json
 npm-debug.log
 yarn-error.log
+
