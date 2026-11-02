@@ -28,7 +28,7 @@ This roadmap reflects the repository implementation on the active development br
 - [x] Add a recent audit-activity browser for administrators and document managers.
 - [ ] Add notification links/read-state UX and reviewer workload/overdue indicators.
 - [ ] Expand rejection policy choices beyond the current reject-cycle-and-revise behavior.
-- [ ] Add dedicated tests for notification delivery, review queue authorization, rejection reasons, and audit visibility.
+- [ ] Add dedicated tests for notification delivery, review queue authorization, rejection reasons, audit visibility, and reviewer read access after a completed cycle.
 - [ ] Complete authorization regression tests for every Filament action and workflow endpoint.
 
 ## Phase 3 — Expiry and notifications
