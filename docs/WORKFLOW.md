@@ -24,7 +24,7 @@ All assigned reviewers must approve before a cycle is approved. Any rejection re
 
 ## Assignment and decisions
 
-When a cycle is submitted, each assigned reviewer receives an in-app database notification. Reviewers can see their pending assignments in the dashboard queue and open the document workflow to inspect the file and history.
+When a cycle is submitted, each assigned reviewer receives an in-app database notification. Reviewers can see their pending assignments in the dashboard queue and open the document workflow to inspect the file and history. After deciding, assigned reviewers retain read access to the workflow and decision history, but file downloads remain governed by the separate download policy.
 
 Only the assigned active reviewer can decide their review. The workflow service re-checks the review/cycle state inside a database transaction to prevent duplicate or stale decisions.
 
