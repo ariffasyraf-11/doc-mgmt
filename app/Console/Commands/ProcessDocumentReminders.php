@@ -56,7 +56,7 @@ class ProcessDocumentReminders extends Command
 
         $this->deliverPendingReminders();
 
-        $this->info('Document reminder processing completed.');
+        $this->info('Document reminder processing completed.'); // Log message for console output
 
         return self::SUCCESS;
     }
