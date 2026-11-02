@@ -81,7 +81,7 @@ class DocumentWorkflowService
             ]);
 
             foreach ($reviewers as $index => $reviewer) {
-                DocumentVersionReview::query()->create([
+                $review = DocumentVersionReview::query()->create([
                     'review_cycle_id' => $cycle->id,
                     'document_version_id' => $lockedVersion->id,
                     'reviewer_id' => $reviewer->id,
@@ -108,7 +108,7 @@ class DocumentWorkflowService
         if (! in_array($decision, [ReviewStatus::Approved, ReviewStatus::Rejected], true)) {
             throw ValidationException::withMessages(['decision' => 'A review decision must be approved or rejected.']);
         }
-        if ($review->reviewer_id !== $actor->id || ! $actor->is_active || ! $actor->isReviewer()) {
+        if ($decision === ReviewStatus::Rejected && blank($comments)) {\n            throw ValidationException::withMessages(['comments' => 'A rejection reason is required.']);\n        }\n        if ($review->reviewer_id !== $actor->id || ! $actor->is_active || ! $actor->isReviewer()) {
             throw new AuthorizationException('Only the assigned active reviewer can decide this review.');
         }
 
