@@ -11,7 +11,7 @@
 
 - **Organization-wide:** available to active employees.
 - **Department-only:** available to active employees in the document's department.
-- **Restricted:** requires an explicit access grant, except the owner and assigned reviewers for their review work.
+- **Restricted:** requires an explicit access grant, except the owner and users assigned to review the document. Assigned reviewers retain read access to workflow and decision history after their review cycle completes; this does not automatically grant file-download access.
 - **Confidential:** requires an explicit access grant or assigned review relationship, except the owner.
 
 Confidential access is not automatically granted to every administrator or manager.
