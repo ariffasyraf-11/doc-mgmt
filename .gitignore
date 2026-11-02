@@ -1,16 +1,16 @@
 /vendor
 /node_modules
-public
 /public/build
 /public/hot
 /public/storage
-storage
 /storage/*.key
 /storage/pail
-/storage/framework/cache/*
+/storage/framework/cache/data/*
 /storage/framework/sessions/*
 /storage/framework/testing/*
 /storage/framework/views/*
+/storage/logs/*.log
+/bootstrap/cache/*.php
 /.env
 .env.*
 !.env.example
@@ -22,4 +22,3 @@ storage
 auth.json
 npm-debug.log
 yarn-error.log
-
