@@ -1,13 +1,12 @@
 <?php
 
-namespace App\\Filament\\Widgets;
+namespace App\Filament\Widgets;
 
-use App\\Filament\\Resources\\Documents\\DocumentResource;
-use App\\Models\\Document;
-use Filament\\Tables\\Columns\\TextColumn;
-use Filament\\Tables\\Table;
-use Filament\\Widgets\\TableWidget;
-use Illuminate\\Database\\Eloquent\\Builder;
+use App\Filament\Resources\Documents\DocumentResource;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class RecentDocuments extends TableWidget
 {
