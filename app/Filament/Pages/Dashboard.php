@@ -14,7 +14,9 @@ class Dashboard extends BaseDashboard
     {
         return [
             DocumentOverviewStats::class,
+            PendingReviewQueue::class,
             RecentDocuments::class,
+            RecentAuditActivity::class,
         ];
     }
 }
