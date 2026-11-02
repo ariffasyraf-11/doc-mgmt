@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Filament\\Widgets;
+namespace App\Filament\Widgets;
 
-use App\\Models\\DocumentAuditLog;
-use Filament\\Tables\\Columns\\TextColumn;
-use Filament\\Tables\\Table;
-use Filament\\Widgets\\TableWidget;
-use Illuminate\\Support\\Facades\\Auth;
+use App\Models\DocumentAuditLog;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget;
+use Illuminate\Support\Facades\Auth;
 
 class RecentAuditActivity extends TableWidget
 {
@@ -18,7 +18,7 @@ class RecentAuditActivity extends TableWidget
     {
         $user = Auth::user();
 
-        return $user?->isAdministrator() || $user?->isDocumentManager();
+        return (bool) ($user?->isAdministrator() || $user?->isDocumentManager());
     }
 
     public function table(Table $table): Table
