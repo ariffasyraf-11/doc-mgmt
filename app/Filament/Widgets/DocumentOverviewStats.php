@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Filament\\Widgets;
+namespace App\Filament\Widgets;
 
-use App\\Enums\\DocumentWorkflowStatus;
-use App\\Filament\\Resources\\Documents\\DocumentResource;
-use Filament\\Widgets\\StatsOverviewWidget as BaseWidget;
-use Filament\\Widgets\\StatsOverviewWidget\\Stat;
+use App\Enums\DocumentWorkflowStatus;
+use App\Filament\Resources\Documents\DocumentResource;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class DocumentOverviewStats extends BaseWidget
 {
