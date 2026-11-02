@@ -1,16 +1,16 @@
 <?php
 
-namespace App\\Filament\\Widgets;
+namespace App\Filament\Widgets;
 
-use App\\Enums\\ReviewStatus;
-use App\\Models\\DocumentVersionReview;
-use App\\Services\\DocumentWorkflowService;
-use Filament\\Actions\\Action;
-use Filament\\Forms\\Components\\Textarea;
-use Filament\\Tables\\Columns\\TextColumn;
-use Filament\\Tables\\Table;
-use Filament\\Widgets\\TableWidget;
-use Illuminate\\Support\\Facades\\Auth;
+use App\Enums\ReviewStatus;
+use App\Models\DocumentVersionReview;
+use App\Services\DocumentWorkflowService;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget;
+use Illuminate\Support\Facades\Auth;
 
 class PendingReviewQueue extends TableWidget
 {
