@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Notifications;
+namespace App\Notifications;
 
-use App\\Models\\Document;
-use App\\Models\\DocumentVersionReview;
-use Illuminate\\Bus\\Queueable;
-use Illuminate\\Notifications\\Notification;
+use App\Models\Document;
+use App\Models\DocumentVersionReview;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Notification;
 
 class ReviewAssignedNotification extends Notification
 {
