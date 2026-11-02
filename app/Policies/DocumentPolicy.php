@@ -20,7 +20,7 @@ class DocumentPolicy
 
         if (in_array($document->visibility, [DocumentVisibility::Restricted, DocumentVisibility::Confidential], true)) {
             return $document->accessGrants()->where('user_id', $user->id)->exists()
-                || $this->isAssignedActiveReviewer($user, $document);
+                || $this->isAssignedReviewer($user, $document);
         }
 
         if (in_array($user->role, [UserRole::Administrator, UserRole::DocumentManager], true)) return true;
@@ -112,11 +112,12 @@ class DocumentPolicy
         return $user->can('download', $version);
     }
 
-    private function isAssignedActiveReviewer(User $user, Document $document): bool
+    private function isAssignedReviewer(User $user, Document $document): bool
     {
+        // Reviewers retain read access to the workflow and decision history after
+        // their assigned cycle is completed. This does not grant download access.
         return $document->versions()->whereHas('reviews', fn ($reviews) => $reviews
-            ->where('reviewer_id', $user->id)
-            ->whereHas('cycle', fn ($cycles) => $cycles->where('status', 'in_progress')))
+            ->where('reviewer_id', $user->id))
             ->exists();
     }
 }
