@@ -4,7 +4,7 @@
 - **Eloquent models:** documents, versions, review cycles, reviewer assignments, departments, categories, document types, review policies, access grants, audit events, downloads, and reminders.
 - **Policies:** authorization for viewing, editing, submitting, publishing, archiving, and downloading. Private file downloads are authorized server-side.
 - **Workflow services:** transactional submission, reviewer decisions, publication, replacement, archiving, and audit event recording.
-- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. No external notification channel is enabled.
+- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. `User` uses Laravel's `Notifiable` trait and the database notifications table is created by the initial DMS schema migration. No external notification channel is enabled. A complete Filament notification inbox, unread counter, and mark-as-read UI are not yet implemented; see `docs/NOTIFICATIONS.md` for activation.
 - **Scheduled command:** creates and processes configured document reminders.
 - **Private storage disk:** document files are stored outside the public web root.
 
