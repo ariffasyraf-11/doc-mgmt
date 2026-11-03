@@ -4,9 +4,17 @@
 - **Eloquent models:** documents, versions, review cycles, reviewer assignments, departments, categories, document types, review policies, access grants, audit events, downloads, and reminders.
 - **Policies:** authorization for viewing, editing, submitting, publishing, archiving, and downloading. Private file downloads are authorized server-side.
 - **Workflow services:** transactional submission, reviewer decisions, publication, replacement, archiving, and audit event recording.
-- **Notifications:** Laravel database notifications for reviewer assignments and expiry reminders. No external notification channel is enabled.
-- **Scheduled command:** creates and processes due expiry reminder events.
+- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. No external notification channel is enabled.
+- **Scheduled command:** creates and processes configured document reminders.
 - **Private storage disk:** document files are stored outside the public web root.
+
+## Reminder configuration and processing
+
+Reminder settings are stored on each document type as JSON arrays: expiry_reminder_days, expiry_reminder_recipients, next_review_reminder_days, and next_review_reminder_recipients.
+
+The scheduled command evaluates published documents against their expiry and next-review dates. It resolves selected recipient groups, creates idempotent reminder records using the unique document/recipient/type/date key, and delivers database notifications. Failed attempts are retried up to five times; stale processing records can be reclaimed after 15 minutes.
+
+Recipient groups are resolved at processing time: owner, active administrators/document managers, and active reviewers assigned to the latest review cycle. Clearing all selections disables that reminder category.
 
 ## Workflow invariants
 
@@ -27,4 +35,4 @@ Workflow transitions and downloads record audit events. The dashboard audit brow
 
 ## Operational validation still required
 
-Run migrations and the full test suite against the supported PHP/Composer/MySQL environment. Validate queue behavior, notification persistence, concurrent review decisions, download authorization, scheduler execution, backups, and restore procedures before production use.
+Run migrations and the full test suite against the supported PHP/Composer/MySQL environment. Validate queue behavior, notification persistence, concurrent review decisions, download authorization, scheduler execution, reminder recipient resolution, timezone behavior, backups, and restore procedures before production use.
