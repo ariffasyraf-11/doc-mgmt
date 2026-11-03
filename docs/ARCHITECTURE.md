@@ -1,12 +1,16 @@
 # Architecture
 
-- **Filament panel:** authenticated internal UI, CRUD resources, dashboard statistics, reviewer queue, recent-document list, and restricted audit activity table.
+- **Filament panel:** authenticated internal UI, CRUD resources, dashboard statistics, reviewer queue, recent-document list, restricted audit activity table, and database notification centre in the top navigation.
 - **Eloquent models:** documents, versions, review cycles, reviewer assignments, departments, categories, document types, review policies, access grants, audit events, downloads, and reminders.
 - **Policies:** authorization for viewing, editing, submitting, publishing, archiving, and downloading. Private file downloads are authorized server-side.
 - **Workflow services:** transactional submission, reviewer decisions, publication, replacement, archiving, and audit event recording.
-- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. `User` uses Laravel's `Notifiable` trait and the database notifications table is created by the initial DMS schema migration. No external notification channel is enabled. A complete Filament notification inbox, unread counter, and mark-as-read UI are not yet implemented; see `docs/NOTIFICATIONS.md` for activation.
+- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. User uses Laravel's Notifiable trait. The Filament panel enables its database notification bell and polls for updates every 30 seconds. Notification records are scoped to the authenticated user by Laravel's notifiable relationship. No external notification channel is enabled.
 - **Scheduled command:** creates and processes configured document reminders.
 - **Private storage disk:** document files are stored outside the public web root.
+
+## Notification centre
+
+The Admin panel enables Filament's database notification feature in AdminPanelProvider. Filament renders the notification bell/dropdown, unread indicators, and read-state actions. The notification storage uses Laravel's standard notifications table. Review assignment notifications are written when reviewers are assigned; expiry and next-review notifications are written by the reminder processor. Document links in notification payloads lead to the workflow route, where the normal document policies continue to apply.
 
 ## Reminder configuration and processing
 
@@ -35,4 +39,4 @@ Workflow transitions and downloads record audit events. The dashboard audit brow
 
 ## Operational validation still required
 
-Run migrations and the full test suite against the supported PHP/Composer/MySQL environment. Validate queue behavior, notification persistence, concurrent review decisions, download authorization, scheduler execution, reminder recipient resolution, timezone behavior, backups, and restore procedures before production use.
+Run migrations and the full test suite against the supported PHP/Composer/MySQL environment. Validate notification persistence and read-state behavior, concurrent review decisions, download authorization, scheduler execution, reminder recipient resolution, timezone behavior, backups, and restore procedures before production use.
