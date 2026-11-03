@@ -17,7 +17,7 @@ This is an active first implementation, not yet production-ready. See docs/ROADM
 
 ## Requirements
 
-- PHP 8.3+
+- PHP 8.4.1+
 - Composer 2
 - MySQL
 - Filament 5 compatible with Laravel 13
