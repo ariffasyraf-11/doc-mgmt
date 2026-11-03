@@ -4,16 +4,17 @@ Internal document management for one organization, built with Laravel 13 and Fil
 
 ## Current implementation
 
-- Document metadata management in Filament.
-- Department, category, and document-type foundation.
+- Document metadata management and Filament resources for core reference data.
 - Private file uploads with SHA-256 checksums and version history.
 - Authorized download route for the current published version, with download audit records.
-- Sequential/parallel review-cycle service, reviewer decisions, publication, and archive actions.
+- Sequential/parallel review-cycle service, reviewer decisions, publication, replacement, and archive actions.
+- Reviewer assignment notifications, a reviewer pending queue, and rejection-reason validation.
+- Recent audit activity table for administrators and document managers.
+- Dashboard statistics and recent documents.
 - Expiry dates and scheduled in-app database reminders.
-- Role and visibility policy foundations.
-- Initial automated access-policy tests.
+- Role and visibility policy foundations with initial access-policy tests.
 
-This is an active first implementation, not yet production-ready. See docs/ROADMAP.md for remaining work.
+This is an active first implementation, not yet production-ready. See [docs/ROADMAP.md](docs/ROADMAP.md) for remaining work and validation gaps.
 
 ## Requirements
 
@@ -45,4 +46,4 @@ The command is dms:process-reminders. Run the Laravel scheduler every minute in 
 
 ## Important
 
-The review UI and first workflow endpoints are implemented, but full CRUD for users/departments/document types, configurable reminder settings, retry monitoring, complete tests, backup/recovery instructions, and production hardening remain in the roadmap.
+The current implementation includes the initial review UI and workflow endpoints, but notification read-state UX, expanded rejection strategies, configurable reminder settings, complete tests, backup/recovery instructions, and production hardening remain in the roadmap.

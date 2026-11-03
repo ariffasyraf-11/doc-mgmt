@@ -1,11 +1,25 @@
 # Permissions
 
-Roles: Administrator, Document Manager, Reviewer, Employee.
+## Roles
 
-Visibility:
-- Organization-wide: available to active employees.
-- Department-only: available to active employees in the document's department.
-- Restricted: requires an explicit access grant, except the owner.
-- Confidential: requires an explicit access grant or assigned review relationship, except the owner.
+- **Administrator:** system administration, review-policy configuration, and audit visibility.
+- **Document Manager:** operational document management and audit visibility within the permissions enforced by document policies.
+- **Reviewer:** access to documents assigned for review and the ability to decide only their own pending review assignments.
+- **Employee:** access to documents according to ownership, organization/department visibility, and explicit grants.
 
-Authorization must be enforced by Laravel policies and every file-download endpoint. UI visibility alone is not authorization. Confidential access is not automatically granted to every administrator or manager.
+## Document visibility
+
+- **Organization-wide:** available to active employees.
+- **Department-only:** available to active employees in the document's department.
+- **Restricted:** requires an explicit access grant, except the owner and users assigned to review the document. Assigned reviewers retain read access to workflow and decision history after their review cycle completes; this does not automatically grant file-download access.
+- **Confidential:** requires an explicit access grant or assigned review relationship, except the owner.
+
+Confidential access is not automatically granted to every administrator or manager.
+
+## Audit visibility
+
+The dashboard audit-activity browser is available to administrators and document managers. Audit events are read-only through this interface.
+
+## Enforcement
+
+Authorization must be enforced by Laravel policies and every file-download endpoint. UI visibility alone is not authorization. Review decisions must verify the assigned reviewer, active account, pending review status, and active review cycle server-side.

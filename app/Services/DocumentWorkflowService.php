@@ -14,6 +14,7 @@ use App\Models\DocumentTypeReviewPolicy;
 use App\Models\DocumentVersion;
 use App\Models\DocumentVersionReview;
 use App\Models\User;
+use App\Notifications\ReviewAssignedNotification;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -81,13 +82,15 @@ class DocumentWorkflowService
             ]);
 
             foreach ($reviewers as $index => $reviewer) {
-                DocumentVersionReview::query()->create([
+                $review = DocumentVersionReview::query()->create([
                     'review_cycle_id' => $cycle->id,
                     'document_version_id' => $lockedVersion->id,
                     'reviewer_id' => $reviewer->id,
                     'sequence_number' => $index + 1,
                     'status' => ReviewStatus::Pending,
                 ]);
+
+                $reviewer->notify(new ReviewAssignedNotification($lockedDocument, $review));
             }
 
             $lockedVersion->update(['status' => DocumentVersionStatus::UnderReview, 'submitted_at' => now()]);
@@ -107,6 +110,9 @@ class DocumentWorkflowService
     {
         if (! in_array($decision, [ReviewStatus::Approved, ReviewStatus::Rejected], true)) {
             throw ValidationException::withMessages(['decision' => 'A review decision must be approved or rejected.']);
+        }
+        if ($decision === ReviewStatus::Rejected && blank($comments)) {
+            throw ValidationException::withMessages(['comments' => 'A rejection reason is required.']);
         }
         if ($review->reviewer_id !== $actor->id || ! $actor->is_active || ! $actor->isReviewer()) {
             throw new AuthorizationException('Only the assigned active reviewer can decide this review.');
