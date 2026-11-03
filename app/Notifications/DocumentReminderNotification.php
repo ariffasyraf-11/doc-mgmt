@@ -10,7 +10,10 @@ class DocumentReminderNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public readonly Document $document, public readonly string $reminderType) {}
+    public function __construct(
+        public readonly Document $document,
+        public readonly string $reminderType,
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -19,19 +22,23 @@ class DocumentReminderNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
+        $isReviewReminder = str_starts_with($this->reminderType, 'next_review_');
+        $date = $isReviewReminder ? $this->document->next_review_date : $this->document->expiry_date;
+        $dateLabel = $isReviewReminder ? 'next review date' : 'expiry date';
+        $message = $isReviewReminder
+            ? sprintf('Document "%s" (%s) is due for review on %s.', $this->document->title, $this->document->reference_number, $date?->toDateString() ?? 'an unknown date')
+            : sprintf('Document "%s" (%s) expires on %s.', $this->document->title, $this->document->reference_number, $date?->toDateString() ?? 'an unknown date');
+
         return [
-            'type' => 'document_expiry_reminder',
+            'type' => $isReviewReminder ? 'document_next_review_reminder' : 'document_expiry_reminder',
             'document_id' => $this->document->id,
             'document_title' => $this->document->title,
             'reference_number' => $this->document->reference_number,
             'reminder_type' => $this->reminderType,
-            'expiry_date' => $this->document->expiry_date?->toDateString(),
-            'message' => sprintf(
-                'Document "%s" (%s) expires on %s.',
-                $this->document->title,
-                $this->document->reference_number,
-                $this->document->expiry_date?->toDateString() ?? 'an unknown date',
-            ),
+            'reminder_date' => $date?->toDateString(),
+            'date_label' => $dateLabel,
+            'message' => $message,
+            'url' => url('/admin/documents/'.$this->document->id),
         ];
     }
 }
