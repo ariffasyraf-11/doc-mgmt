@@ -4,6 +4,8 @@ namespace App\Notifications;
 
 use App\Models\Document;
 use App\Models\DocumentVersionReview;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -23,13 +25,15 @@ class ReviewAssignedNotification extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        return [
-            'title' => 'Document review assigned',
-            'body' => 'You have been assigned to review: '.$this->document->title,
-            'document_id' => $this->document->id,
-            'document_reference' => $this->document->reference_number,
-            'review_id' => $this->review->id,
-            'url' => route('documents.workflow.show', $this->document),
-        ];
+        return FilamentNotification::make()
+            ->title('Document review assigned')
+            ->body('You have been assigned to review: '.$this->document->title)
+            ->actions([
+                Action::make('view')
+                    ->label('View document')
+                    ->url(route('documents.workflow.show', $this->document))
+                    ->markAsRead(),
+            ])
+            ->getDatabaseMessage();
     }
 }
