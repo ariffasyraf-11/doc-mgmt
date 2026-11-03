@@ -2,63 +2,134 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\UserRole;
 use App\Models\Document;
 use App\Models\DocumentReminder;
+use App\Models\User;
 use App\Notifications\DocumentReminderNotification;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ProcessDocumentReminders extends Command
 {
     protected $signature = 'dms:process-reminders';
-    protected $description = 'Create and deliver due in-app document expiry reminders.';
+    protected $description = 'Create and deliver configured in-app document reminders.';
 
     public function handle(): int
     {
         $today = today();
 
         Document::query()
-            ->whereNotNull('expiry_date')
             ->where('workflow_status', 'published')
             ->where(function ($query) use ($today) {
-                $query->whereDate('expiry_date', $today->copy()->addDays(90))
-                    ->orWhereDate('expiry_date', $today->copy()->addDays(30))
-                    ->orWhereDate('expiry_date', $today->copy()->addDays(7))
-                    ->orWhereDate('expiry_date', $today);
+                $query->whereBetween('expiry_date', [$today->toDateString(), $today->copy()->addYear()->toDateString()])
+                    ->orWhereBetween('next_review_date', [$today->toDateString(), $today->copy()->addYear()->toDateString()]);
             })
+            ->with(['documentType', 'owner'])
             ->chunkById(100, function ($documents) use ($today) {
                 foreach ($documents as $document) {
-                    $days = (int) $today->diffInDays($document->expiry_date, false);
-                    $type = match ($days) {
-                        90 => 'expiry_90_days',
-                        30 => 'expiry_30_days',
-                        7 => 'expiry_7_days',
-                        0 => 'expired_today',
-                        default => null,
-                    };
+                    $type = $document->documentType;
 
-                    if ($type === null || ! $document->owner_id) {
+                    if (! $type) {
                         continue;
                     }
 
-                    DocumentReminder::query()->firstOrCreate(
-                        [
-                            'document_id' => $document->id,
-                            'recipient_id' => $document->owner_id,
-                            'reminder_type' => $type,
-                            'due_date' => $document->expiry_date,
-                        ],
-                        ['status' => 'pending', 'attempts' => 0],
+                    $this->queueDateReminders(
+                        $document,
+                        'expiry',
+                        $document->expiry_date,
+                        $type->expiryReminderDays(),
+                        $type->expiryReminderRecipients(),
+                        $today,
+                    );
+
+                    $this->queueDateReminders(
+                        $document,
+                        'next_review',
+                        $document->next_review_date,
+                        $type->nextReviewReminderDays(),
+                        $type->nextReviewReminderRecipients(),
+                        $today,
                     );
                 }
             });
 
         $this->deliverPendingReminders();
 
-        $this->info('Document reminder processing completed.'); // Log message for console output
+        $this->info('Document reminder processing completed.');
 
         return self::SUCCESS;
+    }
+
+    private function queueDateReminders(
+        Document $document,
+        string $kind,
+        ?Carbon $date,
+        array $configuredDays,
+        array $recipientTypes,
+        Carbon $today,
+    ): void {
+        if (! $date || ! in_array((int) $today->diffInDays($date, false), array_map('intval', $configuredDays), true)) {
+            return;
+        }
+
+        $days = (int) $today->diffInDays($date, false);
+        $reminderType = $kind === 'expiry'
+            ? ($days === 0 ? 'expired_today' : "expiry_{$days}_days")
+            : ($days === 0 ? 'next_review_due' : "next_review_{$days}_days");
+
+        foreach ($this->resolveRecipients($document, $recipientTypes) as $recipient) {
+            DocumentReminder::query()->firstOrCreate(
+                [
+                    'document_id' => $document->id,
+                    'recipient_id' => $recipient->id,
+                    'reminder_type' => $reminderType,
+                    'due_date' => $date->toDateString(),
+                ],
+                [
+                    'document_version_id' => $document->current_published_version_id,
+                    'status' => 'pending',
+                    'attempts' => 0,
+                ],
+            );
+        }
+    }
+
+    private function resolveRecipients(Document $document, array $recipientTypes): \Illuminate\Support\Collection
+    {
+        $ids = collect();
+
+        if (in_array('owner', $recipientTypes, true) && $document->owner_id) {
+            $ids->push($document->owner_id);
+        }
+
+        if (in_array('document_managers', $recipientTypes, true)) {
+            $ids = $ids->merge(
+                User::query()
+                    ->where('is_active', true)
+                    ->whereIn('role', [UserRole::Administrator->value, UserRole::DocumentManager->value])
+                    ->pluck('id'),
+            );
+        }
+
+        if (in_array('assigned_reviewers', $recipientTypes, true)) {
+            $latestCycle = $document->reviewCycles()->latest('id')->first();
+
+            if ($latestCycle) {
+                $ids = $ids->merge(
+                    $latestCycle->reviews()
+                        ->whereHas('reviewer', fn ($query) => $query->where('is_active', true))
+                        ->pluck('reviewer_id'),
+                );
+            }
+        }
+
+        return User::query()
+            ->where('is_active', true)
+            ->whereIn('id', $ids->unique()->values())
+            ->get();
     }
 
     private function deliverPendingReminders(): void
@@ -77,11 +148,10 @@ class ProcessDocumentReminders extends Command
                 foreach ($reminders as $reminder) {
                     $claimed = DB::transaction(function () use ($reminder) {
                         $locked = DocumentReminder::query()->lockForUpdate()->findOrFail($reminder->id);
-
-                        $isRetryable = in_array($locked->status, ['pending', 'failed'], true)
+                        $retryable = in_array($locked->status, ['pending', 'failed'], true)
                             || ($locked->status === 'processing' && $locked->updated_at?->lte(now()->subMinutes(15)));
 
-                        if (! $isRetryable || $locked->attempts >= 5) {
+                        if (! $retryable || $locked->attempts >= 5) {
                             return null;
                         }
 
