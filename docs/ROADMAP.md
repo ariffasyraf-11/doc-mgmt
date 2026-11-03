@@ -36,9 +36,10 @@ This roadmap reflects the repository implementation on the active development br
 - [x] Add reminder event schema and duplicate-prevention constraint.
 - [x] Generate scheduled expiry reminders and deliver in-app database notifications.
 - [x] Track retry attempts and recover stale processing events.
-- [ ] Add administrator-configurable reminder schedules and recipients.
-- [ ] Add next-review-date reminders.
-- [ ] Add reminder operations dashboard, failure visibility, and timezone/concurrency tests.
+- [x] Add administrator-configurable expiry reminder schedules and recipient groups per document type.
+- [x] Add configurable next-review-date reminders and recipient groups.
+- [ ] Add reminder operations dashboard and failure visibility.
+- [ ] Add tests for configurable schedules, recipient resolution, duplicate prevention, retries, timezone behavior, and concurrent scheduler execution.
 
 ## Phase 4 — Reporting and release hardening
 
@@ -52,6 +53,7 @@ This roadmap reflects the repository implementation on the active development br
 
 - Notifications are in-app/database only; email, SMS, and push are out of scope.
 - Expiry does not automatically unpublish or archive a document.
+- Next-review reminders do not automatically create a review cycle.
 - A rejected review cycle is closed; the owner must revise and submit another cycle.
 - The active review policy is snapshotted per cycle so later policy edits do not change work already in progress.
 - The review policy UI currently offers sequential/parallel mode, minimum reviewer count, owner-review permission, and the single supported rejection behavior.
