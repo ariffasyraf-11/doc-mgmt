@@ -11,10 +11,11 @@ Internal document management for one organization, built with Laravel 13 and Fil
 - Reviewer assignment notifications, a reviewer pending queue, and rejection-reason validation.
 - Recent audit activity table for administrators and document managers.
 - Dashboard statistics and recent documents.
-- Expiry dates and scheduled in-app database reminders.
+- Configurable expiry and next-review reminder schedules and recipient groups per document type.
+- In-app database notifications with duplicate prevention and retry handling.
 - Role and visibility policy foundations with initial access-policy tests.
 
-This is an active first implementation, not yet production-ready. See [docs/ROADMAP.md](docs/ROADMAP.md) for remaining work and validation gaps.
+This is an active first implementation, not yet production-ready. See docs/ROADMAP.md for remaining work and validation gaps.
 
 ## Requirements
 
@@ -42,8 +43,8 @@ Document files are stored on the private disk under storage/app/private/document
 
 ## Reminder scheduler
 
-The command is dms:process-reminders. Run the Laravel scheduler every minute in production; the reminder task itself runs daily at 08:00 in the configured application timezone.
+The command is dms:process-reminders. Run the Laravel scheduler every minute in production; the reminder task itself runs daily at 08:00 in the configured application timezone. Reminder schedules and recipient groups are configured by administrators under Document Types. Notifications remain in-app/database only.
 
 ## Important
 
-The current implementation includes the initial review UI and workflow endpoints, but notification read-state UX, expanded rejection strategies, configurable reminder settings, complete tests, backup/recovery instructions, and production hardening remain in the roadmap.
+The current implementation includes the initial review UI and workflow endpoints, but notification read-state UX, expanded rejection strategies, reminder operations dashboard/failure visibility, complete tests, backup/recovery instructions, and production hardening remain in the roadmap.
