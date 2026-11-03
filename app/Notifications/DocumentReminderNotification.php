@@ -38,7 +38,7 @@ class DocumentReminderNotification extends Notification
             'reminder_date' => $date?->toDateString(),
             'date_label' => $dateLabel,
             'message' => $message,
-            'url' => url('/admin/documents/'.$this->document->id),
+            'url' => route('documents.workflow.show', ['document' => $this->document->id]),
         ];
     }
 }
