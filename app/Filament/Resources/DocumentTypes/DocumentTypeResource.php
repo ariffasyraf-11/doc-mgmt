@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Auth;
 class DocumentTypeResource extends Resource
 {
     protected static ?string $model = DocumentType::class;
-    protected static string|\\BackedEnum|null $navigationIcon = 'heroicon-o-document-duplicate';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-duplicate';
     protected static ?string $navigationLabel = 'Document Types';
 
     public static function form(Schema $schema): Schema
