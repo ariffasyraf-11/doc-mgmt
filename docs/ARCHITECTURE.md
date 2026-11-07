@@ -1,26 +1,38 @@
 # Architecture
 
-For the supported framework/runtime versions and implementation conventions, see [Development Standards](DEVELOPMENT_STANDARDS.md). New application code must follow that baseline and preserve the domain invariants below.
+For supported framework/runtime versions and implementation conventions, see [Development Standards](DEVELOPMENT_STANDARDS.md).
 
-- **Filament panel:** authenticated internal UI, CRUD resources, dashboard statistics, reviewer queue, recent-document list, restricted audit activity table, and database notification centre in the top navigation.
+## Application components
+
+- **Filament panel:** authenticated internal UI, document register, metadata filters, expiry watchlist, dashboard statistics, reviewer queue, recent-document list, restricted audit activity table, and database notification centre.
 - **Eloquent models:** documents, versions, review cycles, reviewer assignments, departments, categories, document types, review policies, access grants, audit events, downloads, and reminders.
 - **Policies:** authorization for viewing, editing, submitting, publishing, archiving, and downloading. Private file downloads are authorized server-side.
 - **Workflow services:** transactional submission, reviewer decisions, publication, replacement, archiving, and audit event recording.
-- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. User uses Laravel's Notifiable trait. The Filament panel enables its database notification bell and polls for updates every 30 seconds. Notification records are scoped to the authenticated user by Laravel's notifiable relationship. No external notification channel is enabled.
+- **Notifications:** Laravel database notifications for reviewer assignments, expiry reminders, and next-review reminders. No external notification channel is enabled.
 - **Scheduled command:** creates and processes configured document reminders.
 - **Private storage disk:** document files are stored outside the public web root.
 
+## Document metadata as reference
+
+The `documents` record is the authoritative metadata/reference record. Its reference number is unique and identifies the document independently of its physical file. Metadata includes title, description, category, document type, department, owner, visibility, effective date, expiry date, next-review date, and workflow status.
+
+The document register uses this metadata for searching, filtering, sorting, dashboard reporting, and expiry watchlists. Category, document type, and department are linked reference data. Once a document leaves Draft, the reference number and descriptive/classification metadata are protected from ordinary edits. File-specific properties are stored separately for each version.
+
+## File version history
+
+Each upload creates a separate `document_versions` row and a file in private storage. A version records its sequence number, original filename, MIME type, byte size, SHA-256 checksum, uploader, change notes, workflow status, lifecycle timestamps, and optional superseded-version relationship.
+
+The workflow history displays these attributes and identifies the version referenced by `current_published_version_id`. The current published pointer changes only after an approved replacement is successfully published. Earlier versions remain in history and remain subject to the version-specific download policy. The checksum supports integrity verification; it is not a substitute for authorization or backup.
+
 ## Notification centre
 
-The Admin panel enables Filament's database notification feature in AdminPanelProvider. Filament renders the notification bell/dropdown, unread indicators, and read-state actions. The notification storage uses Laravel's standard notifications table. Review assignment notifications are written when reviewers are assigned; expiry and next-review notifications are written by the reminder processor. Document links in notification payloads lead to the workflow route, where the normal document policies continue to apply.
+The Admin panel enables Filament's database notification feature in AdminPanelProvider. Filament renders the notification bell/dropdown, unread indicators, and read-state actions. Review assignment notifications are written when reviewers are assigned; expiry and next-review notifications are written by the reminder processor. Document links lead to the workflow route, where normal document policies continue to apply.
 
 ## Reminder configuration and processing
 
 Reminder settings are stored on each document type as JSON arrays: expiry_reminder_days, expiry_reminder_recipients, next_review_reminder_days, and next_review_reminder_recipients.
 
-The scheduled command evaluates published documents against their expiry and next-review dates. It resolves selected recipient groups, creates idempotent reminder records using the unique document/recipient/type/date key, and delivers database notifications. Failed attempts are retried up to five times; stale processing records can be reclaimed after 15 minutes.
-
-Recipient groups are resolved at processing time: owner, active administrators/document managers, and active reviewers assigned to the latest review cycle. Clearing all selections disables that reminder category.
+The scheduled command evaluates published documents against expiry and next-review dates. It resolves selected recipient groups, creates idempotent reminder records using the unique document/recipient/type/date key, and delivers database notifications. Failed attempts are retried up to five times; stale processing records can be reclaimed after 15 minutes.
 
 ## Workflow invariants
 
@@ -37,8 +49,8 @@ Recipient groups are resolved at processing time: owner, active administrators/d
 
 ## Audit and access
 
-Workflow transitions and downloads record audit events. The dashboard audit browser is restricted to administrators and document managers. Document visibility is enforced by query scopes/policies and every file-download endpoint; UI visibility alone is not authorization.
+Workflow transitions and downloads record audit events. The dashboard audit browser is restricted to administrators and document managers. Document visibility is enforced by policies and every file-download endpoint; UI visibility alone is not authorization.
 
 ## Operational validation still required
 
-Run migrations and the full test suite against the supported PHP/Composer/MySQL environment. Validate notification persistence and read-state behavior, concurrent review decisions, download authorization, scheduler execution, reminder recipient resolution, timezone behavior, backups, and restore procedures before production use.
+Run migrations and the full test suite against the supported PHP/Composer/MySQL environment. Validate metadata visibility, historical-version download authorization, notification persistence, concurrent review decisions, scheduler execution, timezone behavior, backups, and restore procedures.
