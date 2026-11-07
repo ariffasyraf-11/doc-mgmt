@@ -16,6 +16,10 @@
 
 Confidential access is not automatically granted to every administrator or manager.
 
+## Metadata and version-history access
+
+Document metadata and version-history details are shown only after the document-level view policy authorizes access to the workflow screen. Metadata visibility does not itself grant permission to download a file. Every historical version download is separately checked by the version download policy and recorded in the download log.
+
 ## Audit visibility
 
 The dashboard audit-activity browser is available to administrators and document managers. Audit events are read-only through this interface.
