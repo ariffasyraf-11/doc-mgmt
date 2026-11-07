@@ -1,12 +1,12 @@
 <?php
 
-namespace App\\Services;
+namespace App\Services;
 
-use App\\Models\\Document;
-use App\\Models\\DocumentVersion;
-use App\\Models\\DocumentVersionIntegrityCheck;
-use App\\Models\\User;
-use Illuminate\\Support\\Facades\\Storage;
+use App\Models\Document;
+use App\Models\DocumentVersion;
+use App\Models\DocumentVersionIntegrityCheck;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 class DocumentVersionIntegrityService
@@ -42,7 +42,7 @@ class DocumentVersionIntegrityService
                             ? 'verified'
                             : 'mismatch';
                     }
-                } catch (\\Throwable $exception) {
+                } catch (\Throwable $exception) {
                     throw new RuntimeException('Unable to calculate the file SHA-256 checksum.', previous: $exception);
                 } finally {
                     fclose($stream);

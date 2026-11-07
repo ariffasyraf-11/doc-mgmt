@@ -51,7 +51,9 @@ This roadmap reflects code present on the active Phase 4 development branch. A c
 - [x] Keep reference numbers unique and prevent reference/metadata edits after the document leaves Draft.
 - [x] Expand the version-history view with file name, MIME type, size, SHA-256 checksum, uploader, upload/submission/approval/publication timestamps, superseded-version link, and change notes.
 - [x] Explicitly identify the current published file version in the version history.
-- [x] Load version metadata and document reference metadata efficiently for the workflow/history screen.\n- [x] Add on-demand SHA-256 integrity verification for each stored version, with immutable verification history and audit events.\n- [x] Display the latest integrity result and expandable verification history in File Version History.
+- [x] Load version metadata and document reference metadata efficiently for the workflow/history screen.
+- [x] Add on-demand SHA-256 integrity verification for each stored version, with immutable verification history and audit events.
+- [x] Display the latest integrity result and expandable verification history in File Version History.
 
 ### Remaining
 
