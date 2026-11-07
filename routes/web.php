@@ -13,7 +13,7 @@ Route::middleware('auth')->group(function () {
         ->name('documents.versions.create');
     Route::post('/documents/{document}/versions', [DocumentVersionController::class, 'store'])
         ->name('documents.versions.store');
-    Route::post('/documents/{document}/versions/{version}/submit', [DocumentWorkflowController::class, 'submit'])
+    Route::post('/documents/{document}/versions/{version}/verify-integrity', [DocumentWorkflowController::class, 'verifyIntegrity'])\n        ->name('documents.versions.verify-integrity');\n    Route::post('/documents/{document}/versions/{version}/submit', [DocumentWorkflowController::class, 'submit'])
         ->name('documents.versions.submit');
     Route::post('/documents/{document}/versions/{version}/reviews/{review}/decision', [DocumentWorkflowController::class, 'decide'])
         ->name('documents.versions.reviews.decide');

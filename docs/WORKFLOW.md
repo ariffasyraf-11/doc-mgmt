@@ -20,9 +20,9 @@ Each document type may have one active review policy. The policy supports sequen
 
 ## File version history
 
-Every file upload creates a new version number under the same document reference. Each version retains original filename, MIME type, file size in bytes, SHA-256 checksum, uploader, upload timestamp, change notes, submission/approval/publication timestamps, workflow status, and the version it supersedes.
+Every file upload creates a new version number under the same document reference. Each version retains original filename, MIME type, file size in bytes, SHA-256 checksum, uploader, upload timestamp, change notes, submission/approval/publication timestamps, workflow status, and the version it supersedes. SHA-256 is the only checksum algorithm used.
 
-The version-history screen presents these properties and marks the current published version. A replacement is a separate version; it does not overwrite the previous file. The existing published version remains current while the replacement is under review and changes only when the replacement is approved and published. Historical versions remain stored privately and download permission is checked for each version.
+The version-history screen presents these properties and marks the current published version. A replacement is a separate version; it does not overwrite the previous file. The existing published version remains current while the replacement is under review and changes only when the replacement is approved and published. Historical versions remain stored privately and download permission is checked for each version. An authorized viewer can run Verify Checksum (SHA-256) for any version. The system recalculates SHA-256 from the private stored file, compares it with the immutable upload-time checksum, and records every result and actor in integrity-check history and the audit log. Results distinguish Verified, Mismatch, Missing, Unreadable, and Checksum Unavailable. Verification does not modify the file, original checksum, publication pointer, or workflow status.
 
 ## Assignment and decisions
 

@@ -66,6 +66,17 @@
                     <dt>File type</dt><dd>{{ $version->mime_type }}</dd>
                     <dt>File size</dt><dd>{{ number_format($version->file_size / 1024, 1) }} KB ({{ number_format($version->file_size) }} bytes)</dd>
                     <dt>SHA-256 checksum</dt><dd><code>{{ $version->checksum }}</code></dd>
+                    @php($latestIntegrityCheck = $version->integrityChecks->first())
+                    <dt>Latest integrity check</dt>
+                    <dd>
+                        @if ($latestIntegrityCheck)
+                            <strong>{{ str($latestIntegrityCheck->status)->replace('_', ' ')->title() }}</strong>
+                            — {{ $latestIntegrityCheck->checked_at?->format('Y-m-d H:i:s') }}
+                            @if ($latestIntegrityCheck->checker) by {{ $latestIntegrityCheck->checker->name }} @endif
+                        @else
+                            Not yet verified
+                        @endif
+                    </dd>
                     <dt>Uploaded by</dt><dd>{{ $version->uploader?->name ?? 'Unknown user' }}</dd>
                     <dt>Uploaded at</dt><dd>{{ $version->created_at?->format('Y-m-d H:i:s') }}</dd>
                     <dt>Submitted at</dt><dd>{{ $version->submitted_at?->format('Y-m-d H:i:s') ?? 'Not submitted' }}</dd>
@@ -74,6 +85,29 @@
                     <dt>Replaces version</dt><dd>{{ $version->supersedes?->version_number ? 'Version '.$version->supersedes->version_number : 'Initial version / not specified' }}</dd>
                     <dt>Change notes</dt><dd>{{ $version->change_notes ?: 'No change notes provided' }}</dd>
                 </dl>
+
+                <form method="post" action="{{ route('documents.versions.verify-integrity', [$document, $version]) }}">
+                    @csrf
+                    <button type="submit">Verify Checksum (SHA-256)</button>
+                </form>
+
+                @if ($version->integrityChecks->isNotEmpty())
+                    <details>
+                        <summary>Integrity verification history ({{ $version->integrityChecks->count() }})</summary>
+                        <ul>
+                            @foreach ($version->integrityChecks as $integrityCheck)
+                                <li>
+                                    {{ $integrityCheck->checked_at?->format('Y-m-d H:i:s') }} —
+                                    {{ str($integrityCheck->status)->replace('_', ' ')->title() }} —
+                                    {{ $integrityCheck->checker?->name ?? 'Unknown user' }}
+                                    @if ($integrityCheck->calculated_checksum)
+                                        <br><code>{{ $integrityCheck->calculated_checksum }}</code>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </details>
+                @endif
 
                 @can('download', $version)
                     <p><a href="{{ route('documents.versions.download', [$document, $version]) }}">Download this version</a></p>

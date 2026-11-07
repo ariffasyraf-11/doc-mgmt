@@ -18,7 +18,7 @@ Confidential access is not automatically granted to every administrator or manag
 
 ## Metadata and version-history access
 
-Document metadata and version-history details are shown only after the document-level view policy authorizes access to the workflow screen. Metadata visibility does not itself grant permission to download a file. Every historical version download is separately checked by the version download policy and recorded in the download log.
+Document metadata and version-history details are shown only after the document-level view policy authorizes access to the workflow screen. Metadata visibility does not itself grant permission to download a file. Every historical version download is separately checked by the version download policy and recorded in the download log. SHA-256 verification is available to users who can view the document; the operation reads the private file and records the result, but does not grant or imply download permission.
 
 ## Audit visibility
 

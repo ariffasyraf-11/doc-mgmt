@@ -27,6 +27,7 @@ class DocumentWorkflowController
             'versions.uploader',
             'versions.supersedes',
             'versions.reviews.reviewer',
+            'versions.integrityChecks.checker',
         ]);
         $document->setRelation('versions', $document->versions->sortByDesc('version_number')->values());
 
@@ -44,6 +45,24 @@ class DocumentWorkflowController
             'canPublish' => $request->user()->can('publish', $document),
             'canArchive' => $request->user()->can('archive', $document),
         ]);
+    }
+
+    public function verifyIntegrity(Request $request, Document $document, DocumentVersion $version, DocumentVersionIntegrityService $integrity): RedirectResponse
+    {
+        abort_unless($version->document_id === $document->id, 404);
+        Gate::authorize('view', $document);
+
+        $check = $integrity->verify($document, $version, $request->user());
+
+        $message = match ($check->status) {
+            'verified' => 'File integrity verified: SHA-256 matches the original checksum.',
+            'mismatch' => 'Integrity warning: the calculated SHA-256 does not match the stored checksum.',
+            'missing' => 'Integrity check failed: the file is missing from private storage.',
+            'unreadable' => 'Integrity check could not read the file from private storage.',
+            default => 'Integrity check unavailable: no valid original SHA-256 checksum is recorded.',
+        };
+
+        return back()->with('status', $message);
     }
 
     public function submit(Request $request, Document $document, DocumentVersion $version, DocumentWorkflowService $workflow): RedirectResponse

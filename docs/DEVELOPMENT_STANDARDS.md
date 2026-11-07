@@ -96,7 +96,7 @@ Any feature or refactor must preserve these established rules unless a requireme
 - Every upload creates a new version; never overwrite an existing historical version file.
 - Keep the current published-version pointer unchanged until an approved replacement is published.
 - Display metadata and history only after document-level view authorization. Check download permission separately for every version.
-- Treat the SHA-256 checksum as an integrity reference, not as authorization or backup.
+- Use SHA-256 as the only file checksum algorithm. Calculate it at upload and preserve that original value for the lifetime of the version.\n- Verify integrity by streaming the private stored file and comparing a newly calculated SHA-256 value with the stored checksum using a timing-safe comparison.\n- Store each verification attempt as an immutable history record and create an audit event. Never update the original checksum or file during verification.\n- Verification requires document-view authorization; it does not grant file-download permission. Distinguish verified, mismatch, missing, unreadable, and unavailable-checksum outcomes.\n- Treat the SHA-256 checksum as an integrity reference, not as authorization or backup.
 
 ## 8. Storage, security, and configuration
 

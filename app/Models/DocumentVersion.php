@@ -33,4 +33,5 @@ class DocumentVersion extends Model
     public function supersedes() { return $this->belongsTo(self::class, 'supersedes_version_id'); }
     public function reviewCycles() { return $this->hasMany(DocumentReviewCycle::class); }
     public function reviews() { return $this->hasMany(DocumentVersionReview::class); }
+    public function integrityChecks() { return $this->hasMany(DocumentVersionIntegrityCheck::class)->orderByDesc('checked_at'); }
 }
