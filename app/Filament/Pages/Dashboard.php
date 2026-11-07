@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\DocumentOverviewStats;
+use App\Filament\Widgets\ExpiryWatchlist;
 use App\Filament\Widgets\PendingReviewQueue;
 use App\Filament\Widgets\RecentAuditActivity;
 use App\Filament\Widgets\RecentDocuments;
@@ -15,7 +16,8 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            DocumentOverviewStats::class,\n            ExpiryWatchlist::class,
+            DocumentOverviewStats::class,
+            ExpiryWatchlist::class,
             PendingReviewQueue::class,
             RecentDocuments::class,
             RecentAuditActivity::class,
