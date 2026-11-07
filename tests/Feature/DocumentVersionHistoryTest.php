@@ -40,7 +40,7 @@ class DocumentVersionHistoryTest extends TestCase
 
         $document->update(['current_published_version_id' => $version->id]);
 
-        $response = $this->actingAs($owner)->get(route('documents.workflow.show', $document));
+        $response = $this->actingAs($owner)->get(route('filament.admin.resources.documents.workflow', ['record' => $document]));
 
         $response->assertOk()
             ->assertSee('Document metadata / reference')
@@ -70,7 +70,7 @@ class DocumentVersionHistoryTest extends TestCase
         ]);
 
         $this->actingAs($other)
-            ->get(route('documents.workflow.show', $document))
+            ->get(route('filament.admin.resources.documents.workflow', ['record' => $document]))
             ->assertForbidden();
     }
 
@@ -114,7 +114,7 @@ class DocumentVersionHistoryTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('documents.workflow.show', $document))
+            ->get(route('filament.admin.resources.documents.workflow', ['record' => $document]))
             ->assertOk()
             ->assertSee('Latest integrity check')
             ->assertSee('Verified')

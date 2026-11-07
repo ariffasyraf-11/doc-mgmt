@@ -7,6 +7,7 @@ use App\Enums\DocumentWorkflowStatus;
 use App\Filament\Resources\Documents\Pages\CreateDocument;
 use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
+use App\Filament\Resources\Documents\Pages\ManageDocumentVersions;
 use App\Models\Document;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -122,6 +123,7 @@ class DocumentResource extends Resource
             'index' => ListDocuments::route('/'),
             'create' => CreateDocument::route('/create'),
             'edit' => EditDocument::route('/{record}/edit'),
+            'workflow' => ManageDocumentVersions::route('/{record}/workflow'),
         ];
     }
 }

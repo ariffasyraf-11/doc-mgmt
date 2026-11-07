@@ -65,6 +65,7 @@ Do not edit `composer.lock` manually. Do not change dependency constraints solel
 ## 5. Filament 5 and Livewire 4 rules
 
 - Implement admin UI using Filament 5 components, resources, pages, widgets, actions, forms, tables, and authorization integration.
+- Prefer resource pages and Livewire 4 actions for interactive document workflows; use Filament layouts/components rather than standalone unstyled Blade pages.
 - Check the installed Filament 5 API before adopting code from tutorials or older projects. Filament 3/4 examples may use incompatible namespaces, method names, or component contracts.
 - Keep UI configuration separate from domain rules. A hidden or disabled action is not an authorization boundary.
 - Enforce access through Laravel policies, gates, scoped queries, and server-side action handlers.

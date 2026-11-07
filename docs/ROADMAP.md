@@ -54,6 +54,7 @@ This roadmap reflects code present on the active Phase 4 development branch. A c
 - [x] Load version metadata and document reference metadata efficiently for the workflow/history screen.
 - [x] Add on-demand SHA-256 integrity verification for each stored version, with immutable verification history and audit events.
 - [x] Display the latest integrity result and expandable verification history in File Version History.
+- [x] Move the document version/workflow screen into the Filament 5 resource UI, powered by Livewire 4 interactions.
 
 ### Remaining
 

@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/admin');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/documents/{document}/workflow', [DocumentWorkflowController::class, 'show'])
-        ->name('documents.workflow.show');
+    Route::get('/documents/{document}/workflow', function (\App\Models\Document $document) {
+        return redirect()->to(route('filament.admin.resources.documents.workflow', ['record' => $document]));
+    })->name('documents.workflow.show');
     Route::get('/documents/{document}/versions/create', [DocumentVersionController::class, 'create'])
         ->name('documents.versions.create');
     Route::post('/documents/{document}/versions', [DocumentVersionController::class, 'store'])
