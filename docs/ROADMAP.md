@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-This roadmap reflects the repository implementation on the active development branch. Checkboxes describe code present in the repository; they do not imply that production validation has been completed.
+This roadmap reflects code present on the active Phase 4 development branch. A checked item means implementation is present; it does not mean production validation is complete.
 
 ## Phase 1 — Foundation and document repository
 
@@ -42,11 +42,25 @@ This roadmap reflects the repository implementation on the active development br
 
 ## Phase 4 — Reporting and release hardening
 
-- [ ] Add expiry dashboard, document reports, and retention review pages.
-- [ ] Add advanced audit filters, export, and retention controls.
-- [ ] Complete upload/download/workflow permission and regression tests.
+### Implemented on this branch
+
+- [x] Add an expiry dashboard watchlist for accessible documents already expired or expiring within 30 days.
+- [x] Add an expired-document dashboard metric alongside the existing expiring-soon metric.
+- [x] Improve document metadata as the primary reference for locating and classifying records: reference number, title, category, document type, department, owner, effective date, expiry date, and next-review date.
+- [x] Add metadata columns and category/type/department filters to the document register.
+- [x] Keep reference numbers unique and prevent reference/metadata edits after the document leaves Draft.
+- [x] Expand the version-history view with file name, MIME type, size, SHA-256 checksum, uploader, upload/submission/approval/publication timestamps, superseded-version link, and change notes.
+- [x] Explicitly identify the current published file version in the version history.
+- [x] Load version metadata and document reference metadata efficiently for the workflow/history screen.
+
+### Remaining
+
+- [ ] Add advanced audit filters and a controlled audit export.
+- [ ] Add retention review pages and approved retention execution controls.
+- [ ] Complete upload/download/workflow permission and regression tests, including metadata visibility and historical-version access.
 - [ ] Document backup/restore, retention operations, and deployment procedures.
 - [ ] Validate large-file behavior, production MySQL, scheduler operation, and restore drills.
+- [ ] Resolve Composer PHP platform metadata mismatch and verify the lock file using Composer 2.
 
 ## Current release constraints
 
@@ -56,3 +70,5 @@ This roadmap reflects the repository implementation on the active development br
 - A rejected review cycle is closed; the owner must revise and submit another cycle.
 - The active review policy is snapshotted per cycle so later policy edits do not change work already in progress.
 - The review policy UI currently offers sequential/parallel mode, minimum reviewer count, owner-review permission, and the single supported rejection behavior.
+- Document metadata identifies and classifies the document record; file properties and checksum belong to each individual version.
+- Historical file versions remain retained; publishing a replacement does not erase the prior version.
