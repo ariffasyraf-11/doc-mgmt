@@ -88,7 +88,17 @@ Any feature or refactor must preserve these established rules unless a requireme
 10. **Reminder idempotency:** reminder processing must preserve duplicate prevention and safe retry behavior.
 11. **Timezone:** scheduled reminder behavior uses the configured application timezone; the current default is `Asia/Kuala_Lumpur`.
 
-## 7. Storage, security, and configuration
+## 7. Metadata reference and file version history
+
+- Treat the `documents` row as the authoritative metadata/reference record. Use its unique reference number in correspondence, search, reports, and audit follow-up.
+- Keep category, document type, department, owner, visibility, and lifecycle dates on the document record. Use linked reference tables rather than repeating category/type/department names as free text.
+- Keep file-specific properties on `document_versions`: original filename, MIME type, file size, SHA-256 checksum, uploader, change notes, workflow timestamps, and superseded-version relationship.
+- Every upload creates a new version; never overwrite an existing historical version file.
+- Keep the current published-version pointer unchanged until an approved replacement is published.
+- Display metadata and history only after document-level view authorization. Check download permission separately for every version.
+- Treat the SHA-256 checksum as an integrity reference, not as authorization or backup.
+
+## 8. Storage, security, and configuration
 
 - Keep credentials and environment-specific values in `.env`; never commit secrets.
 - Use `.env.example` only for safe variable names and non-secret defaults.
@@ -99,7 +109,7 @@ Any feature or refactor must preserve these established rules unless a requireme
 - Use least-privilege authorization and test direct route access, not just menu/action visibility.
 - Do not log document contents, passwords, tokens, or other sensitive values.
 
-## 8. Database and migration rules
+## 9. Database and migration rules
 
 - MySQL is the target database; review migrations for MySQL compatibility.
 - Make schema changes through Laravel migrations. Never rely on manual production-only schema edits.
@@ -108,7 +118,7 @@ Any feature or refactor must preserve these established rules unless a requireme
 - Use Eloquent casts for JSON, dates, enums, and other typed attributes where appropriate.
 - Avoid duplicating existing tables or columns; inspect current models and migrations before introducing schema changes.
 
-## 9. Testing and verification expectations
+## 10. Testing and verification expectations
 
 For each code change, select checks appropriate to its risk:
 
@@ -120,7 +130,7 @@ For each code change, select checks appropriate to its risk:
 
 The repository roadmap records outstanding test coverage. Do not describe a test as passed unless it was actually executed in the target environment. CI workflows and GitHub Actions are not part of routine changes unless separately requested.
 
-## 10. Documentation maintenance
+## 11. Documentation maintenance
 
 When changing code, update the relevant documentation in the same feature branch:
 
@@ -133,7 +143,7 @@ When changing code, update the relevant documentation in the same feature branch
 
 Document what is implemented separately from what is planned or merely validated locally. Include new environment variables, commands, migrations, scheduler requirements, and operational steps where applicable.
 
-## 11. Change checklist
+## 12. Change checklist
 
 Before considering a change ready for review:
 
