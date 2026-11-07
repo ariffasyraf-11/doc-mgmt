@@ -14,9 +14,16 @@ class EditDocument extends EditRecord
     {
         if ($this->record->workflow_status !== DocumentWorkflowStatus::Draft) {
             unset(
-                $data['title'], $data['description'], $data['category_id'],
-                $data['document_type_id'], $data['department_id'], $data['visibility'],
-                $data['effective_date'], $data['expiry_date'], $data['next_review_date'],
+                $data['reference_number'],
+                $data['title'],
+                $data['description'],
+                $data['category_id'],
+                $data['document_type_id'],
+                $data['department_id'],
+                $data['visibility'],
+                $data['effective_date'],
+                $data['expiry_date'],
+                $data['next_review_date'],
             );
         }
 
