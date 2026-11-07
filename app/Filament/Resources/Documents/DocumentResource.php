@@ -34,7 +34,11 @@ class DocumentResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('reference_number')->label('Reference number')->maxLength(100)->unique(ignoreRecord: true),
+            TextInput::make('reference_number')
+                ->label('Reference number')
+                ->helperText('Stable identifier used to locate and cross-reference this document record.')
+                ->maxLength(100)
+                ->unique(ignoreRecord: true),
             TextInput::make('title')->required()->maxLength(255),
             Textarea::make('description')->rows(3)->columnSpanFull(),
             Select::make('category_id')->relationship('category', 'name')->searchable()->preload()->required(),
@@ -51,15 +55,23 @@ class DocumentResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('reference_number')->searchable()->sortable(),
-                TextColumn::make('title')->searchable()->sortable()->limit(50),
+                TextColumn::make('reference_number')->label('Reference')->searchable()->sortable()->copyable(),
+                TextColumn::make('title')->searchable()->sortable()->limit(55),
+                TextColumn::make('category.name')->label('Category')->sortable()->toggleable(),
+                TextColumn::make('documentType.name')->label('Document type')->sortable(),
                 TextColumn::make('department.name')->label('Department')->sortable(),
-                TextColumn::make('documentType.name')->label('Type')->sortable(),
+                TextColumn::make('owner.name')->label('Owner')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('effective_date')->date()->placeholder('Not set')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('expiry_date')->date()->sortable()->placeholder('No expiry')
+                    ->color(fn (Document $record) => $record->isExpired() ? 'danger' : null),
+                TextColumn::make('next_review_date')->date()->placeholder('Not set')->toggleable(),
                 TextColumn::make('workflow_status')->badge(),
-                TextColumn::make('expiry_date')->date()->sortable()->color(fn (Document $record) => $record->isExpired() ? 'danger' : null),
                 TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('category')->relationship('category', 'name')->searchable()->preload(),
+                SelectFilter::make('document_type')->relationship('documentType', 'name')->searchable()->preload(),
+                SelectFilter::make('department')->relationship('department', 'name')->searchable()->preload(),
                 SelectFilter::make('visibility')->options(DocumentVisibility::options()),
                 SelectFilter::make('workflow_status')->options(collect(DocumentWorkflowStatus::cases())->mapWithKeys(fn ($status) => [$status->value => str($status->value)->replace('_', ' ')->title()->toString()])->all()),
             ])
@@ -79,21 +91,22 @@ class DocumentResource extends Resource
 
         if (! $user instanceof User) return $query->whereRaw('1 = 0');
 
-        return $query->where(function (Builder $visible) use ($user) {
-            $visible->where('owner_id', $user->id)
-                ->orWhere('visibility', DocumentVisibility::Organization->value)
-                ->orWhere(function (Builder $department) use ($user) {
-                    $department->where('visibility', DocumentVisibility::Department->value)->where('department_id', $user->department_id);
-                })
-                ->orWhereHas('accessGrants', fn (Builder $grants) => $grants->where('user_id', $user->id))
-                ->orWhereHas('versions.reviews', fn (Builder $reviews) => $reviews
-                    ->where('reviewer_id', $user->id)
-                    ->whereHas('cycle', fn (Builder $cycles) => $cycles->where('status', 'in_progress')));
+        return $query->with(['category', 'documentType', 'department', 'owner'])
+            ->where(function (Builder $visible) use ($user) {
+                $visible->where('owner_id', $user->id)
+                    ->orWhere('visibility', DocumentVisibility::Organization->value)
+                    ->orWhere(function (Builder $department) use ($user) {
+                        $department->where('visibility', DocumentVisibility::Department->value)->where('department_id', $user->department_id);
+                    })
+                    ->orWhereHas('accessGrants', fn (Builder $grants) => $grants->where('user_id', $user->id))
+                    ->orWhereHas('versions.reviews', fn (Builder $reviews) => $reviews
+                        ->where('reviewer_id', $user->id)
+                        ->whereHas('cycle', fn (Builder $cycles) => $cycles->where('status', 'in_progress')));
 
-            if ($user->isAdministrator() || $user->isDocumentManager()) {
-                $visible->orWhereIn('visibility', [DocumentVisibility::Organization->value, DocumentVisibility::Department->value]);
-            }
-        });
+                if ($user->isAdministrator() || $user->isDocumentManager()) {
+                    $visible->orWhereIn('visibility', [DocumentVisibility::Organization->value, DocumentVisibility::Department->value]);
+                }
+            });
     }
 
     public static function canViewAny(): bool { return Auth::check() && Auth::user()->can('viewAny', Document::class); }
