@@ -25,6 +25,10 @@ This is an active first implementation, not yet production-ready. See docs/ROADM
 - MySQL
 - Filament 5 compatible with Laravel 13
 
+## Development standards
+
+See [Development Standards](docs/DEVELOPMENT_STANDARDS.md) for the supported stack versions, coding conventions, security rules, DMS invariants, and change checklist. The document also records the outstanding PHP Composer constraint mismatch.
+
 ## Local setup
 
 1. Clone this repository.
