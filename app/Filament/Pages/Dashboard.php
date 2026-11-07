@@ -15,7 +15,7 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            DocumentOverviewStats::class,
+            DocumentOverviewStats::class,\n            ExpiryWatchlist::class,
             PendingReviewQueue::class,
             RecentDocuments::class,
             RecentAuditActivity::class,
