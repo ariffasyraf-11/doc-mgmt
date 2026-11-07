@@ -26,6 +26,10 @@ class DocumentOverviewStats extends BaseWidget
                 ->description('Reviews assigned to you')
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('warning'),
+            Stat::make('Expired', (clone $documents)->whereNotNull('expiry_date')->whereDate('expiry_date', '<=', today())->count())
+                ->description('Accessible documents past their expiry date')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->color('danger'),
             Stat::make('Expiring in 30 days', (clone $documents)
                 ->whereNotNull('expiry_date')
                 ->whereBetween('expiry_date', [today(), today()->addDays(30)])
