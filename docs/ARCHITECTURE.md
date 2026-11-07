@@ -1,5 +1,7 @@
 # Architecture
 
+For the supported framework/runtime versions and implementation conventions, see [Development Standards](DEVELOPMENT_STANDARDS.md). New application code must follow that baseline and preserve the domain invariants below.
+
 - **Filament panel:** authenticated internal UI, CRUD resources, dashboard statistics, reviewer queue, recent-document list, restricted audit activity table, and database notification centre in the top navigation.
 - **Eloquent models:** documents, versions, review cycles, reviewer assignments, departments, categories, document types, review policies, access grants, audit events, downloads, and reminders.
 - **Policies:** authorization for viewing, editing, submitting, publishing, archiving, and downloading. Private file downloads are authorized server-side.
