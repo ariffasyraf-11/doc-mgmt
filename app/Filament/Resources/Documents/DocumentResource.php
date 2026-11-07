@@ -33,21 +33,25 @@ class DocumentResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
+        $metadataLocked = fn (?Document $record): bool => $record !== null
+            && $record->workflow_status !== DocumentWorkflowStatus::Draft;
+
         return $schema->components([
             TextInput::make('reference_number')
                 ->label('Reference number')
                 ->helperText('Stable identifier used to locate and cross-reference this document record.')
                 ->maxLength(100)
-                ->unique(ignoreRecord: true),
-            TextInput::make('title')->required()->maxLength(255),
-            Textarea::make('description')->rows(3)->columnSpanFull(),
-            Select::make('category_id')->relationship('category', 'name')->searchable()->preload()->required(),
-            Select::make('document_type_id')->relationship('documentType', 'name')->searchable()->preload()->required(),
-            Select::make('department_id')->relationship('department', 'name')->searchable()->preload()->required(),
-            Select::make('visibility')->options(DocumentVisibility::options())->required()->default(DocumentVisibility::Department->value),
-            DatePicker::make('effective_date'),
-            DatePicker::make('expiry_date')->afterOrEqual('effective_date'),
-            DatePicker::make('next_review_date'),
+                ->unique(ignoreRecord: true)
+                ->disabled($metadataLocked),
+            TextInput::make('title')->required()->maxLength(255)->disabled($metadataLocked),
+            Textarea::make('description')->rows(3)->columnSpanFull()->disabled($metadataLocked),
+            Select::make('category_id')->relationship('category', 'name')->searchable()->preload()->required()->disabled($metadataLocked),
+            Select::make('document_type_id')->relationship('documentType', 'name')->searchable()->preload()->required()->disabled($metadataLocked),
+            Select::make('department_id')->relationship('department', 'name')->searchable()->preload()->required()->disabled($metadataLocked),
+            Select::make('visibility')->options(DocumentVisibility::options())->required()->default(DocumentVisibility::Department->value)->disabled($metadataLocked),
+            DatePicker::make('effective_date')->disabled($metadataLocked),
+            DatePicker::make('expiry_date')->afterOrEqual('effective_date')->disabled($metadataLocked),
+            DatePicker::make('next_review_date')->disabled($metadataLocked),
         ])->columns(2);
     }
 
