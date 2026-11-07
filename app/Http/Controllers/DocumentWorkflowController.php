@@ -19,7 +19,15 @@ class DocumentWorkflowController
     {
         Gate::authorize('view', $document);
 
-        $document->load(['versions.reviews.reviewer']);
+        $document->load([
+            'category',
+            'documentType',
+            'department',
+            'owner',
+            'versions.uploader',
+            'versions.supersedes',
+            'versions.reviews.reviewer',
+        ]);
         $document->setRelation('versions', $document->versions->sortByDesc('version_number')->values());
 
         $reviewers = User::query()
