@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Document;
+use App\Filament\Resources\Documents\DocumentResource;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
@@ -36,7 +37,7 @@ class DocumentReminderNotification extends Notification
             ->actions([
                 Action::make('view')
                     ->label('View document')
-                    ->url(route('documents.workflow.show', ['document' => $this->document->id]))
+                    ->url(DocumentResource::getUrl('workflow', ['record' => $this->document]))
                     ->markAsRead(),
             ])
             ->getDatabaseMessage();

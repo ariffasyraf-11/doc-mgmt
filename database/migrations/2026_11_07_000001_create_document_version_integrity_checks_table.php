@@ -16,7 +16,7 @@ return new class extends Migration
             $table->char('calculated_checksum', 64)->nullable();
             $table->string('status', 30)->index();
             $table->timestamp('checked_at')->useCurrent()->index();
-            $table->index(['document_version_id', 'checked_at']);
+            $table->index(['document_version_id', 'checked_at'], 'dvi_version_checked_at_idx');
         });
     }
 

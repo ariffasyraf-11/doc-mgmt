@@ -6,6 +6,8 @@ use App\Enums\DocumentVersionStatus;
 use App\Enums\DocumentVisibility;
 use App\Enums\DocumentWorkflowStatus;
 use App\Enums\UserRole;
+use App\Filament\Resources\Documents\Pages\ManageDocumentVersionHistory;
+use App\Filament\Resources\Documents\Pages\ManageDocumentVersions;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Document;
@@ -13,14 +15,16 @@ use App\Models\DocumentType;
 use App\Models\DocumentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class DocumentVersionHistoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authorized_user_can_view_document_reference_metadata_and_file_version_history(): void
+    public function test_authorized_user_can_view_document_metadata_and_workflow(): void
     {
         [$owner, $document] = $this->makeDocument();
 
@@ -47,15 +51,26 @@ class DocumentVersionHistoryTest extends TestCase
             ->assertSee('REF-POLICY-001')
             ->assertSee('Corporate Policy')
             ->assertSee('Operations')
-            ->assertSee('File version history')
+            ->assertSee('Review and publication workflow')
+            ->assertSee('Version history')
+            ->assertSee('policy-final.pdf')
+            ->assertSee('Current published version')
+            ->assertDontSee('SHA-256 checksum')
+            ->assertSee('wire:submit="uploadVersion"', false)
+            ->assertSee('fi-fo-file-upload', false)
+            ->assertSee('Document file')
+            ->assertSee('Change notes');
+
+        $this->actingAs($owner)
+            ->get(route('filament.admin.resources.documents.history', ['record' => $document]))
+            ->assertOk()
+            ->assertSee('Document version history')
             ->assertSee('policy-final.pdf')
             ->assertSee('application/pdf')
             ->assertSee('2,048 bytes')
             ->assertSee(hash('sha256', 'policy-file-content'))
             ->assertSee('Initial approved issue')
-            ->assertSee('Current published version')
-            ->assertSee('Verify Checksum')
-            ->assertSee('wire:click', false);
+            ->assertSee('Verify checksum');
     }
 
     public function test_unauthorized_user_cannot_view_document_metadata_or_version_history(): void
@@ -73,7 +88,11 @@ class DocumentVersionHistoryTest extends TestCase
 
         $this->actingAs($other)
             ->get(route('filament.admin.resources.documents.workflow', ['record' => $document]))
-            ->assertForbidden();
+            ->assertNotFound();
+
+        $this->actingAs($other)
+            ->get(route('filament.admin.resources.documents.history', ['record' => $document]))
+            ->assertNotFound();
     }
 
     public function test_document_viewer_can_verify_a_version_sha256_and_history_is_recorded(): void
@@ -116,11 +135,65 @@ class DocumentVersionHistoryTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->get(route('filament.admin.resources.documents.workflow', ['record' => $document]))
+            ->get(route('filament.admin.resources.documents.history', ['record' => $document]))
             ->assertOk()
             ->assertSee('Latest integrity check')
             ->assertSee('Verified')
             ->assertSee('Integrity verification history');
+    }
+
+    public function test_document_viewer_can_verify_a_version_from_the_filament_livewire_page(): void
+    {
+        Storage::fake('private');
+        [$owner, $document] = $this->makeDocument();
+        $content = 'original policy file';
+        Storage::disk('private')->put('1/policy.pdf', $content);
+
+        $version = DocumentVersion::query()->create([
+            'document_id' => $document->id,
+            'version_number' => 1,
+            'file_path' => '1/policy.pdf',
+            'original_filename' => 'policy.pdf',
+            'mime_type' => 'application/pdf',
+            'file_size' => strlen($content),
+            'checksum' => hash('sha256', $content),
+            'uploaded_by' => $owner->id,
+            'status' => DocumentVersionStatus::Published,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(ManageDocumentVersionHistory::class, ['record' => $document->id])
+            ->call('verifyIntegrity', $version->id)
+            ->assertHasNoErrors()
+            ->assertSee('File integrity verified: SHA-256 matches the original checksum.');
+
+        $this->assertDatabaseHas('document_version_integrity_checks', [
+            'document_version_id' => $version->id,
+            'checked_by' => $owner->id,
+            'status' => 'verified',
+        ]);
+    }
+
+    public function test_owner_can_upload_a_new_version_from_the_filament_livewire_page(): void
+    {
+        Storage::fake('private');
+        [$owner, $document] = $this->makeDocument();
+
+        Livewire::actingAs($owner)
+            ->test(ManageDocumentVersions::class, ['record' => $document->id])
+            ->set('data.file', [UploadedFile::fake()->create('policy.pdf', 50, 'application/pdf')])
+            ->set('data.changeNotes', 'Updated procedure')
+            ->call('uploadVersion')
+            ->assertHasNoErrors()
+            ->assertSee('Uploaded version 1.');
+
+        $this->assertDatabaseHas('document_versions', [
+            'document_id' => $document->id,
+            'version_number' => 1,
+            'original_filename' => 'policy.pdf',
+            'change_notes' => 'Updated procedure',
+            'status' => DocumentVersionStatus::Draft->value,
+        ]);
     }
 
     public function test_checksum_mismatch_is_recorded_without_changing_original_checksum(): void

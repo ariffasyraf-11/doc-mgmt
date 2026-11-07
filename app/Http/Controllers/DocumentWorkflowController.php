@@ -6,7 +6,6 @@ use App\Enums\ReviewStatus;
 use App\Models\Document;
 use App\Models\DocumentVersion;
 use App\Models\DocumentVersionReview;
-use App\Models\User;
 use App\Services\DocumentWorkflowService;
 use App\Services\DocumentVersionIntegrityService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -16,38 +15,6 @@ use Illuminate\Support\Facades\Gate;
 
 class DocumentWorkflowController
 {
-    public function show(Request $request, Document $document)
-    {
-        Gate::authorize('view', $document);
-
-        $document->load([
-            'category',
-            'documentType',
-            'department',
-            'owner',
-            'versions.uploader',
-            'versions.supersedes',
-            'versions.reviews.reviewer',
-            'versions.integrityChecks.checker',
-        ]);
-        $document->setRelation('versions', $document->versions->sortByDesc('version_number')->values());
-
-        $reviewers = User::query()
-            ->where('is_active', true)
-            ->where('role', 'reviewer')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
-
-        return view('documents.versions.create', [
-            'document' => $document,
-            'reviewers' => $reviewers,
-            'canUpload' => $request->user()->can('uploadVersion', $document),
-            'canSubmit' => $request->user()->can('submit', $document),
-            'canPublish' => $request->user()->can('publish', $document),
-            'canArchive' => $request->user()->can('archive', $document),
-        ]);
-    }
-
     public function verifyIntegrity(Request $request, Document $document, DocumentVersion $version, DocumentVersionIntegrityService $integrity): RedirectResponse
     {
         abort_unless($version->document_id === $document->id, 404);

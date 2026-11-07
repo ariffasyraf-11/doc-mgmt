@@ -7,6 +7,7 @@ use App\Enums\DocumentWorkflowStatus;
 use App\Filament\Resources\Documents\Pages\CreateDocument;
 use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
+use App\Filament\Resources\Documents\Pages\ManageDocumentVersionHistory;
 use App\Filament\Resources\Documents\Pages\ManageDocumentVersions;
 use App\Models\Document;
 use App\Models\User;
@@ -83,7 +84,12 @@ class DocumentResource extends Resource
             ->recordActions([
                 Action::make('manageVersions')
                     ->label('Versions / workflow')
-                    ->url(fn (Document $record): string => route('documents.workflow.show', $record))
+                    ->url(fn (Document $record): string => static::getUrl('workflow', ['record' => $record]))
+                    ->visible(fn (Document $record): bool => Auth::user()?->can('view', $record) ?? false),
+                Action::make('versionHistory')
+                    ->label('Version history')
+                    ->icon('heroicon-o-clock')
+                    ->url(fn (Document $record): string => static::getUrl('history', ['record' => $record]))
                     ->visible(fn (Document $record): bool => Auth::user()?->can('view', $record) ?? false),
                 EditAction::make(),
             ]);
@@ -124,6 +130,7 @@ class DocumentResource extends Resource
             'create' => CreateDocument::route('/create'),
             'edit' => EditDocument::route('/{record}/edit'),
             'workflow' => ManageDocumentVersions::route('/{record}/workflow'),
+            'history' => ManageDocumentVersionHistory::route('/{record}/version-history'),
         ];
     }
 }

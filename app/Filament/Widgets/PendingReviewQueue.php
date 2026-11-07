@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\ReviewStatus;
+use App\Filament\Resources\Documents\DocumentResource;
 use App\Models\DocumentVersionReview;
 use App\Services\DocumentWorkflowService;
 use Filament\Actions\Action;
@@ -43,7 +44,7 @@ class PendingReviewQueue extends TableWidget
             ->recordActions([
                 Action::make('open')
                     ->label('Open document')
-                    ->url(fn (DocumentVersionReview $record): string => route('documents.workflow.show', $record->version->document))
+                    ->url(fn (DocumentVersionReview $record): string => DocumentResource::getUrl('workflow', ['record' => $record->version->document]))
                     ->openUrlInNewTab(),
                 Action::make('approve')
                     ->color('success')

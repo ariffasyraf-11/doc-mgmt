@@ -8,16 +8,20 @@ use App\Enums\DocumentWorkflowStatus;
 use App\Enums\ReviewMode;
 use App\Enums\ReviewStatus;
 use App\Enums\UserRole;
+use App\Filament\Resources\Documents\Pages\ManageDocumentVersions;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Document;
 use App\Models\DocumentType;
 use App\Models\DocumentTypeReviewPolicy;
 use App\Models\DocumentVersion;
+use App\Models\DocumentVersionReview;
 use App\Models\User;
 use App\Services\DocumentWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class DocumentWorkflowPublicationTest extends TestCase
@@ -104,6 +108,71 @@ class DocumentWorkflowPublicationTest extends TestCase
         $this->assertSame(DocumentWorkflowStatus::Published, $document->fresh()->workflow_status);
         $this->assertSame(DocumentVersionStatus::Superseded, $oldVersion->fresh()->status);
         $this->assertSame(DocumentVersionStatus::Published, $newVersion->fresh()->status);
+    }
+
+    public function test_document_version_workflow_runs_through_filament_livewire_actions(): void
+    {
+        Storage::fake('private');
+
+        $department = Department::query()->create(['name' => 'Operations', 'code' => 'OPS']);
+        $category = Category::query()->create(['name' => 'Policy']);
+        $type = DocumentType::query()->create(['name' => 'Internal Policy']);
+        DocumentTypeReviewPolicy::query()->create([
+            'document_type_id' => $type->id,
+            'review_mode' => ReviewMode::Sequential,
+            'required_reviewers' => 1,
+            'owner_can_review' => false,
+            'rejection_mode' => 'reject_cycle',
+            'is_active' => true,
+        ]);
+
+        $owner = $this->makeUser($department->id, 'owner@example.test', UserRole::Employee);
+        $reviewer = $this->makeUser($department->id, 'reviewer@example.test', UserRole::Reviewer);
+        $manager = $this->makeUser($department->id, 'manager@example.test', UserRole::DocumentManager);
+        $document = Document::query()->create([
+            'reference_number' => 'DOC-LIVEWIRE-001',
+            'title' => 'Livewire workflow policy',
+            'category_id' => $category->id,
+            'document_type_id' => $type->id,
+            'department_id' => $department->id,
+            'owner_id' => $owner->id,
+            'visibility' => DocumentVisibility::Department,
+            'workflow_status' => DocumentWorkflowStatus::Draft,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(ManageDocumentVersions::class, ['record' => $document->id])
+            ->set('data.file', [UploadedFile::fake()->create('policy.pdf', 50, 'application/pdf')])
+            ->call('uploadVersion')
+            ->assertHasNoErrors();
+
+        $version = DocumentVersion::query()->where('document_id', $document->id)->firstOrFail();
+
+        Livewire::actingAs($owner)
+            ->test(ManageDocumentVersions::class, ['record' => $document->id])
+            ->set("reviewerIds.{$version->id}", [$reviewer->id])
+            ->call('submitVersion', $version->id)
+            ->assertHasNoErrors();
+
+        $review = DocumentVersionReview::query()->where('document_version_id', $version->id)->firstOrFail();
+
+        Livewire::actingAs($reviewer)
+            ->test(ManageDocumentVersions::class, ['record' => $document->id])
+            ->call('decideReview', $version->id, $review->id, 'rejected')
+            ->assertHasErrors('comments')
+            ->set("decisionComments.{$review->id}", 'Reviewed and approved.')
+            ->call('decideReview', $version->id, $review->id, 'approved')
+            ->assertHasNoErrors();
+
+        Livewire::actingAs($manager)
+            ->test(ManageDocumentVersions::class, ['record' => $document->id])
+            ->call('publishVersion', $version->id)
+            ->assertHasNoErrors()
+            ->call('archiveDocument')
+            ->assertHasNoErrors();
+
+        $this->assertSame(DocumentVersionStatus::Published, $version->fresh()->status);
+        $this->assertSame(DocumentWorkflowStatus::Archived, $document->fresh()->workflow_status);
     }
 
     private function makeUser(int $departmentId, string $email, UserRole $role): User

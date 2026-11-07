@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Document;
 use App\Models\DocumentVersionReview;
+use App\Filament\Resources\Documents\DocumentResource;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
@@ -31,7 +32,7 @@ class ReviewAssignedNotification extends Notification
             ->actions([
                 Action::make('view')
                     ->label('View document')
-                    ->url(route('documents.workflow.show', $this->document))
+                    ->url(DocumentResource::getUrl('workflow', ['record' => $this->document]))
                     ->markAsRead(),
             ])
             ->getDatabaseMessage();

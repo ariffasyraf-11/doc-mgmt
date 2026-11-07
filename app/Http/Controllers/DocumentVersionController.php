@@ -18,7 +18,7 @@ class DocumentVersionController
     {
         $this->authorizeUpload($request, $document);
 
-        return redirect()->route('documents.workflow.show', $document);
+        return redirect()->route('filament.admin.resources.documents.workflow', ['record' => $document]);
     }
 
     public function store(Request $request, Document $document, DocumentVersionService $versions): RedirectResponse
@@ -32,7 +32,7 @@ class DocumentVersionController
 
         $version = $versions->upload($document, $validated['file'], $request->user(), $validated['change_notes'] ?? null);
 
-        return redirect()->route('documents.workflow.show', $document)
+        return redirect()->route('filament.admin.resources.documents.workflow', ['record' => $document])
             ->with('status', 'Uploaded version '.$version->version_number.'. It remains a draft until submitted for review.');
     }
 
