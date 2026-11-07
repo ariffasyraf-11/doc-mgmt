@@ -1,5 +1,11 @@
 # Document Workflow
 
+## Document metadata and reference
+
+Each document has one metadata record identified by a unique reference number. Use this reference in correspondence, searches, reports, and audit follow-up. Category, document type, department, owner, visibility, effective date, expiry date, and next-review date describe the document record, not an individual uploaded file.
+
+Metadata can be prepared while a record is in Draft. Once the document leaves Draft, ordinary editing protects the reference number and descriptive/classification/date metadata to preserve a stable reference for review and publication.
+
 ## Lifecycle
 
 Draft → Submitted / Under Review → Approved → Published.
@@ -10,15 +16,13 @@ Archiving is an authorized action, not an automatic expiry transition.
 
 ## Review policy
 
-Each document type may have one active review policy. The policy supports:
+Each document type may have one active review policy. The policy supports sequential or parallel review, minimum reviewer count, optional owner review, and mandatory rejection reason. The active policy and assigned reviewer IDs are copied into the review-cycle snapshot. Changes to the document type policy affect future cycles only.
 
-- **Sequential review:** reviewers decide in their assigned order. A later reviewer cannot decide until earlier reviewers approve.
-- **Parallel review:** assigned reviewers may decide in any order.
-- **Minimum reviewer count:** submission must include at least the configured number of eligible reviewers.
-- **Owner review:** disabled by default; the owner is excluded unless the policy explicitly permits it.
-- **Rejection behavior:** the current supported behavior is to reject the whole review cycle and require revision. A rejection reason is mandatory.
+## File version history
 
-The active policy and assigned reviewer IDs are copied into the review-cycle snapshot. Changes to the document type policy affect future cycles only.
+Every file upload creates a new version number under the same document reference. Each version retains original filename, MIME type, file size in bytes, SHA-256 checksum, uploader, upload timestamp, change notes, submission/approval/publication timestamps, workflow status, and the version it supersedes.
+
+The version-history screen presents these properties and marks the current published version. A replacement is a separate version; it does not overwrite the previous file. The existing published version remains current while the replacement is under review and changes only when the replacement is approved and published. Historical versions remain stored privately and download permission is checked for each version.
 
 ## Assignment and decisions
 
@@ -32,14 +36,6 @@ Publishing requires an approved version. The current published-version pointer i
 
 ## Expiry and next review
 
-Expiry is independent of workflow status. An expired document stays published and is marked expired until an authorized user takes action.
+Expiry is independent of workflow status. An expired document stays published and is marked expired until an authorized user takes action. The dashboard shows accessible documents already expired and those expiring within the next 30 days, using document metadata and reference number.
 
-Administrators configure reminder schedules and recipients on each document type:
-
-- Expiry reminders: 90, 30, and 7 days before expiry, and on the expiry date by default.
-- Next-review reminders: 30 and 7 days before the next review date, and on the review date by default.
-- Recipient groups: document owner, administrators/document managers, and reviewers assigned to the latest review cycle.
-
-The defaults above apply when a document type has no saved reminder configuration. Administrators may disable individual offsets or recipient groups by clearing the relevant selections. A reminder is created once per document, recipient, reminder type, and due date. Delivery is in-app only, with retry handling for failed or stale processing records.
-
-Next-review reminders are notifications only; they do not automatically create a review cycle or change publication status. Expiry likewise does not automatically unpublish or archive a document.
+Administrators configure reminder schedules and recipients on each document type. Reminder delivery is in-app only, with retry handling for failed or stale processing records. Next-review reminders do not automatically create a review cycle or change publication status.
