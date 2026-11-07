@@ -6,10 +6,29 @@
     <title>Document workflow — {{ $document->title }}</title>
 </head>
 <body>
-<main style="max-width: 900px; margin: 2rem auto; padding: 1rem; font-family: system-ui, sans-serif;">
+<main style="max-width: 1000px; margin: 2rem auto; padding: 1rem; font-family: system-ui, sans-serif;">
     <p><a href="{{ url('/admin') }}">Return to document management</a></p>
+
     <h1>{{ $document->title }}</h1>
-    <p><strong>{{ $document->reference_number }}</strong> · {{ $document->workflow_status->value }} · Visibility: {{ $document->visibility->label() }}</p>
+    <p><strong>Reference:</strong> {{ $document->reference_number }} ·
+        <strong>Status:</strong> {{ $document->workflow_status->value }} ·
+        <strong>Visibility:</strong> {{ $document->visibility->label() }}</p>
+
+    <section aria-labelledby="metadata-heading">
+        <h2 id="metadata-heading">Document metadata / reference</h2>
+        <dl>
+            <dt>Description</dt><dd>{{ $document->description ?: 'Not provided' }}</dd>
+            <dt>Category</dt><dd>{{ $document->category?->name ?? 'Not set' }}</dd>
+            <dt>Document type</dt><dd>{{ $document->documentType?->name ?? 'Not set' }}</dd>
+            <dt>Department</dt><dd>{{ $document->department?->name ?? 'Not set' }}</dd>
+            <dt>Owner</dt><dd>{{ $document->owner?->name ?? 'Not set' }}</dd>
+            <dt>Effective date</dt><dd>{{ $document->effective_date?->format('Y-m-d') ?? 'Not set' }}</dd>
+            <dt>Expiry date</dt><dd>{{ $document->expiry_date?->format('Y-m-d') ?? 'No expiry date' }}</dd>
+            <dt>Next review date</dt><dd>{{ $document->next_review_date?->format('Y-m-d') ?? 'Not set' }}</dd>
+        </dl>
+        <p>Use this metadata and reference number to identify, classify, search, and report on the document record. File-level properties are recorded separately for each version below.</p>
+    </section>
+
     @if ($document->isExpired())
         <p role="status"><strong>Expired:</strong> This document remains published until an authorized action is taken.</p>
     @endif
@@ -32,16 +51,32 @@
         </section>
     @endif
 
-    <section>
-        <h2>Version history</h2>
+    <section aria-labelledby="version-history-heading">
+        <h2 id="version-history-heading">File version history</h2>
+        <p>Each upload is retained as a separate file version. The published version remains current until an approved replacement is published.</p>
         @forelse ($document->versions as $version)
             <article style="border:1px solid #ddd; padding:1rem; margin:1rem 0;">
-                <h3>Version {{ $version->version_number }} — {{ $version->status->value }}</h3>
-                <p>{{ $version->original_filename }} · Uploaded {{ $version->created_at->format('Y-m-d H:i') }}</p>
-                @if ($version->change_notes) <p>{{ $version->change_notes }}</p> @endif
+                <h3>Version {{ $version->version_number }} — {{ $version->status->value }}
+                    @if ($document->current_published_version_id === $version->id)
+                        <strong>(Current published version)</strong>
+                    @endif
+                </h3>
+                <dl>
+                    <dt>Original filename</dt><dd>{{ $version->original_filename }}</dd>
+                    <dt>File type</dt><dd>{{ $version->mime_type }}</dd>
+                    <dt>File size</dt><dd>{{ number_format($version->file_size / 1024, 1) }} KB ({{ number_format($version->file_size) }} bytes)</dd>
+                    <dt>SHA-256 checksum</dt><dd><code>{{ $version->checksum }}</code></dd>
+                    <dt>Uploaded by</dt><dd>{{ $version->uploader?->name ?? 'Unknown user' }}</dd>
+                    <dt>Uploaded at</dt><dd>{{ $version->created_at?->format('Y-m-d H:i:s') }}</dd>
+                    <dt>Submitted at</dt><dd>{{ $version->submitted_at?->format('Y-m-d H:i:s') ?? 'Not submitted' }}</dd>
+                    <dt>Approved at</dt><dd>{{ $version->approved_at?->format('Y-m-d H:i:s') ?? 'Not approved' }}</dd>
+                    <dt>Published at</dt><dd>{{ $version->published_at?->format('Y-m-d H:i:s') ?? 'Not published' }}</dd>
+                    <dt>Replaces version</dt><dd>{{ $version->supersedes?->version_number ? 'Version '.$version->supersedes->version_number : 'Initial version / not specified' }}</dd>
+                    <dt>Change notes</dt><dd>{{ $version->change_notes ?: 'No change notes provided' }}</dd>
+                </dl>
 
                 @can('download', $version)
-                    <p><a href="{{ route('documents.versions.download', [$document, $version]) }}">Download file</a></p>
+                    <p><a href="{{ route('documents.versions.download', [$document, $version]) }}">Download this version</a></p>
                 @endcan
 
                 @if ($canSubmit && in_array($version->status->value, ['draft', 'rejected'], true))
