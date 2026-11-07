@@ -53,7 +53,9 @@ class DocumentVersionHistoryTest extends TestCase
             ->assertSee('2,048 bytes')
             ->assertSee(hash('sha256', 'policy-file-content'))
             ->assertSee('Initial approved issue')
-            ->assertSee('Current published version');
+            ->assertSee('Current published version')
+            ->assertSee('Verify Checksum')
+            ->assertSee('wire:click', false);
     }
 
     public function test_unauthorized_user_cannot_view_document_metadata_or_version_history(): void
