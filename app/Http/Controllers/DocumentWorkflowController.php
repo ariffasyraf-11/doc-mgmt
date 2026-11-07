@@ -8,6 +8,7 @@ use App\Models\DocumentVersion;
 use App\Models\DocumentVersionReview;
 use App\Models\User;
 use App\Services\DocumentWorkflowService;
+use App\Services\DocumentVersionIntegrityService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

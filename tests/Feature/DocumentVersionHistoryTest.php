@@ -13,6 +13,7 @@ use App\Models\DocumentType;
 use App\Models\DocumentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DocumentVersionHistoryTest extends TestCase
